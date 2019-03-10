@@ -8,7 +8,7 @@
     <van-field
       style="margin-bottom: 10px"
       left-icon="user"
-      v-model="loginData.username"
+      v-model="loginData.loginInfo"
       center
       clearable
       placeholder="请输入用户名"
@@ -27,35 +27,31 @@
     <div style="position: relative">
       <van-field
         style="margin-bottom: 10px"
-        v-model="loginData.captcha"
+        v-model="loginData.imgCode"
         center
         clearable
         placeholder="请输入验证码"
       ></van-field>
       <div style="position: absolute; right: 10px; top: 10px;">
-        <img src="../assets/captcha.png"/>
+        <img :src="captchaSrc" @click="changeCaptcha"/>
       </div>
     </div>
-    <van-button type="primary" style="width: 60%" @click="loginHandler">登录</van-button>
+    <van-button type="primary" style="width: 60%" @click="loginHandler" :loading="loading">登录</van-button>
   </van-row>
 </template>
 
 <script>
-import { Toast } from 'vant'
-import Vue from 'vue'
-Vue.use(Toast)
-
+import { RequestLogin, CheckUserName, CheckPhone, CheckEmail, CheckImgCode, SendCodeToPhone, Register } from '@/api/user'
 export default {
-  name: 'HelloWorld',
   data () {
     return {
       loginData: {
-        username: '',
+        loginInfo: '',
         password: '',
-        captcha: ''
+        imgCode: ''
       },
-      msg: 'Welcome to Your Vue.js App',
-      value: '',
+      captchaSrc: process.env.BASE_API + '/user/createImg',
+      loading: false,
       icon: 'close-eye',
       type: 'password'
     }
@@ -70,9 +66,20 @@ export default {
         this.type = 'password'
       }
     },
+    changeCaptcha () {
+      this.captchaSrc = `${process.env.BASE_API}/user/createImg?${new Date().getTime()}`
+    },
     loginHandler () {
-      if (!this.loginData.username || !this.loginData.password || !this.loginData.captcha) {
-        Toast.fail('请将完善登陆信息')
+      if (!this.loginData.loginInfo || !this.loginData.password || !this.loginData.imgCode) {
+        this.$toast.fail('请完善登陆信息')
+      } else {
+        this.loading = true
+        RequestLogin({ ...this.loginData }).then(res => {
+          this.loading = false
+          this.$router.push({ path: '/fileList' })
+        }).catch(res => {
+          this.loading = false
+        })
       }
     }
   }
