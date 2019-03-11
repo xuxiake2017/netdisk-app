@@ -31,46 +31,51 @@
             上传时间：{{formatFileTime(item, index)}}
           </van-row>
           <van-row style="margin-top: 5px">
-            <van-button size="mini" type="danger">删除</van-button>
-            <van-button size="mini" type="primary">下载</van-button>
-            <van-button size="mini" type="warning">重命名</van-button>
+            <van-button size="mini" type="danger" @click="deleteHandler(item)">删除</van-button>
+            <van-button v-if="item.isDir" size="mini" type="primary" @click="downloadHandler(item)">下载</van-button>
+            <van-button size="mini" type="warning" @click="renameHandler(item)">重命名</van-button>
           </van-row>
         </van-collapse-item>
       </van-collapse>
-
-      <!--<van-cell value="内容" icon="shop-o" is-link>
-        <template slot="title">
-          <span class="custom-text">单元格</span>
-          <van-tag type="danger">标签</van-tag>
-        </template>
-      </van-cell>
-      <van-cell
-        v-for="item in list"
-        :key="item"
-        :title="item"
-      />-->
     </van-list>
+    <van-dialog
+      v-model="show"
+      show-cancel-button
+      :before-close="beforeClose"
+    >
+      <van-field
+        style="margin: 10px 0"
+        v-model="newFileName"
+        placeholder="请输入文件名"
+      />
+    </van-dialog>
   </div>
 </template>
 
 <script>
-import $ from 'jquery'
 import { GetFileList } from '@/api/file'
 import util from '@/utils/util'
 export default {
   name: 'FileList',
   data () {
     return {
+      filters: {
+        parentId: -1,
+        fileRealName: ''
+      },
       pagination: {
         total: 0,
-        pageNum: 1,
+        pageNum: 0,
         pageSize: 20
       },
       fileList: [],
       loading: false,
       finished: false,
       activeNames: [],
-      disabled: false
+      disabled: false,
+      show: false,
+      renameRow: null,
+      newFileName: ''
     }
   },
   methods: {
@@ -112,58 +117,73 @@ export default {
       return util.formatDate.format(new Date(row.uploadTime), 'yyyy-MM-dd hh:mm:ss')
     },
     getFileList () {
-      GetFileList({ ...this.pagination }).then(res => {
-        this.fileList = res.data.pageInfo.list
-        this.pagination.pageNum = res.data.pageInfo.pageNum
-        console.log(this.fileList)
+      this.pagination.pageNum++
+      GetFileList({ ...this.filters, ...this.pagination }).then(res => {
+        // 加载状态结束
+        this.loading = false
+        this.fileList.push(...res.data.pageInfo.list)
+        // this.pagination.pageNum++
       })
     },
     onLoad () {
       // 异步更新数据
       setTimeout(() => {
-        this.getFileList()
-        // 加载状态结束
-        this.loading = false
-
         // 数据全部加载完成
         if (this.pagination.pageNum * this.pagination.pageSize > this.fileList.length) {
           this.finished = true
+          this.loading = false
+          return
         }
-      }, 500)
+        this.getFileList()
+      }, 300)
+    },
+    getSubFileList (item) {
+      this.filters.parentId = item.id
+      this.loading = true
+      this.finished = false
+      this.fileList = []
+      this.pagination.pageNum = 0
+      this.onLoad()
     },
     fn (event, item, index) {
-      console.log(event.srcElement.className)
-      console.log(item)
-      console.log(index)
       const className = event.srcElement.className
       const $vanCollapseItem = this.$refs.vanCollapse.items.find(item => {
         return index === item.name
       })
-      console.log($vanCollapseItem)
       if (className.indexOf('van-cell__right-icon') !== -1) {
-        console.log($vanCollapseItem.expanded)
         this.$refs.vanCollapse.switch(index, $vanCollapseItem.expanded)
-        console.log($vanCollapseItem.expanded)
       } else if (className.indexOf('van-button') !== -1) {
-      } else {
-        console.log($vanCollapseItem.expanded)
+      } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
-        console.log($vanCollapseItem.expanded)
+        if (item.isDir === 0) {
+          this.getSubFileList(item)
+        }
+      } else {
+        this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
-      // this.disabled = false
-      // console.log(event)
-      // console.log(event.path[0])
-      // const className = $(event.path[0]).prop('className')
-      // if (className.indexOf('van-cell__right-icon') !== -1) {
-      //   this.$refs.vanCollapseItem.parent.switch(this.$refs.vanCollapseItem.name, this.$refs.vanCollapseItem.expanded)
-      // } else if (className.indexOf('van-button') !== -1) {
-      // } else {
-      //   this.$refs.vanCollapseItem.parent.switch(this.$refs.vanCollapseItem.name, !this.$refs.vanCollapseItem.expanded)
-      // }
     },
-    deleteHandler () {
+    deleteHandler (item) {
+      this.$dialog.confirm({
+        title: '提示',
+        message: '确认删除？'
+      }).then(res => {
+        // 删除
+        console.log(item)
+      }).catch(res => {
+        // 取消
+      })
     },
-    downloadHandler () {
+    downloadHandler (item) {
+      window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${item.fileSaveName}`, '_blank');
+    },
+    renameHandler (item) {
+      this.renameRow = item
+      this.newFileName = this.renameRow.fileRealName
+      this.show = true;
+    },
+    beforeClose (action, done) {
+      console.log(action)
+      done()
     }
   }
 }
