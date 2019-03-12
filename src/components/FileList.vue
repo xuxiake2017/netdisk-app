@@ -1,6 +1,21 @@
 <template>
   <div class="float-left">
+    <van-nav-bar title="文件列表" left-text="返回" left-arrow :fixed="true">
+      <van-icon name="search" slot="right" />
+    </van-nav-bar>
+    <div class="nav">
+      <van-row class="breadcrumb">
+        <van-col class="breadcrumb-item" v-for="(item, index) in pathStore">
+          <a href="" @click.prevent="jump(item, index)">{{item.fileRealName}}</a>
+          <span>/</span>
+        </van-col>
+      </van-row>
+    </div>
+    <!--<van-nav-bar title="标题" left-text="返回" left-arrow :fixed="true">-->
+      <!--<van-icon name="search" slot="right" />-->
+    <!--</van-nav-bar>-->
     <van-list
+      style="margin-top: 75px;"
       v-model="loading"
       :finished="finished"
       finished-text="没有更多了"
@@ -59,6 +74,9 @@ export default {
   name: 'FileList',
   data () {
     return {
+      pathStore: [
+        {parentId: -1, fileRealName: '全部文件'}
+      ],
       filters: {
         parentId: -1,
         fileRealName: ''
@@ -143,7 +161,21 @@ export default {
       this.finished = false
       this.fileList = []
       this.pagination.pageNum = 0
+      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
       this.onLoad()
+    },
+    // 文件路径跳转
+    jump (item, index) {
+      if ((this.pathStore.length === 1) || (this.pathStore.length > 1 && index + 1 === this.pathStore.length)) {
+        return
+      }
+      this.pathStore.splice(index + 1, this.pathStore.length - 1)
+      this.filters.parentId = item.parentId
+      this.loading = true
+      this.finished = false
+      this.fileList = []
+      this.pagination.pageNum = 0
+      this.getFileList()
     },
     fn (event, item, index) {
       const className = event.srcElement.className
@@ -193,4 +225,36 @@ export default {
   .float-left {
     text-align: left;
   }
+  .nav {
+    top: 46px;
+    left: 0;
+    width: 100%;
+    height: 35px;
+    position: fixed;
+    background-color: #FFFFFF;
+    z-index: 1;
+    text-align: center;
+    line-height: 1;
+    font-size: 14px;
+  }
+  .breadcrumb {
+    margin: 10px 10px;
+  }
+  .breadcrumb-item {
+    margin-left: 5px;
+  }
+  /*.nav::after {*/
+    /*content: ' ';*/
+    /*position: absolute;*/
+    /*pointer-events: none;*/
+    /*-webkit-box-sizing: border-box;*/
+    /*box-sizing: border-box;*/
+    /*top: -50%;*/
+    /*left: -50%;*/
+    /*right: -50%;*/
+    /*bottom: -50%;*/
+    /*-webkit-transform: scale(.5);*/
+    /*transform: scale(.5);*/
+    /*border: 0 solid #ebedf0;*/
+  /*}*/
 </style>
