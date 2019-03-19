@@ -3,13 +3,6 @@
   src: url('./iconfont.ttf') format('truetype'); /* chrome, firefox, opera, Safari, Android, iOS 4.2+ */
 }
 
-/*.iconfont {*/
-  /*font-family: "iconfont" !important;*/
-  /*font-size: 16px;*/
-  /*font-style: normal;*/
-  /*-webkit-font-smoothing: antialiased;*/
-  /*-moz-osx-font-smoothing: grayscale;*/
-/*}*/
 .van-icon {
   position: relative;
   font-family: "vant-icon", "iconfont" !important;
@@ -19,19 +12,35 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.van-icon-open-eye:before {
+.van-icon-my-gallery:before {
+  content: "\e681";
+}
+
+.van-icon-my-file:before {
+  content: "\e68a";
+}
+
+.van-icon-my-open-eye:before {
   content: "\e600";
 }
 
-.van-icon-cloud-lock:before {
+.van-icon-my-cloud-lock:before {
   content: "\e6f4";
 }
 
-.van-icon-close-eye:before {
+.van-icon-my-close-eye:before {
   content: "\e602";
 }
 
-.van-icon-user:before {
+.van-icon-my-user:before {
   content: "\e633";
+}
+
+.van-icon-my-fileupload:before {
+  content: "\e644";
+}
+
+.van-icon-my-logout:before {
+  content: "\e62e";
 }
 

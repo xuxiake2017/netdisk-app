@@ -1,19 +1,37 @@
 <template>
-  <div class="float-left">
-    <van-nav-bar title="文件列表" left-text="返回" left-arrow :fixed="true">
-      <van-icon name="search" slot="right" />
+  <div>
+    <van-popup v-model="uploadPopupShow" position="bottom" style="width: 100%; height: 50%;" @click-overlay="uploadPopupCloseHandler">
+      <van-row style="margin: 10px 10px;">
+        <el-upload
+          ref="upload"
+          :action="uploadAction"
+          :before-remove="beforeRemove"
+          :before-upload="beforeUpload"
+          :on-preview="handlePreview"
+          :on-change="onFileChange"
+          :with-credentials="true"
+          :auto-upload="false"
+          :limit="uploadLimit"
+          :on-exceed="handleExceed"
+          :data="uploadData">
+          <el-button size="small" type="primary" slot="trigger">点击选择</el-button>
+          <el-button size="small" type="success" @click="submitUpload">上传到服务器</el-button>
+          <div slot="tip" class="el-upload__tip">只支持单个文件上传，文件大小不能超过100M</div>
+        </el-upload>
+      </van-row>
+    </van-popup>
+    <van-nav-bar :title="title" :fixed="true" @click-left="openPopup" @click-right="openUploadPopup">
+      <van-icon name="my-fileupload" slot="right" :size="'20px'"/>
+      <img :src="user.avatar" class="avatar-top" slot="left"/>
     </van-nav-bar>
-    <div class="nav">
+    <div class="my-nav">
       <van-row class="breadcrumb">
-        <van-col class="breadcrumb-item" v-for="(item, index) in pathStore">
+        <van-col class="breadcrumb-item" v-for="(item, index) in pathStore" :key="index">
           <a href="" @click.prevent="jump(item, index)">{{item.fileRealName}}</a>
           <span>/</span>
         </van-col>
       </van-row>
     </div>
-    <!--<van-nav-bar title="标题" left-text="返回" left-arrow :fixed="true">-->
-      <!--<van-icon name="search" slot="right" />-->
-    <!--</van-nav-bar>-->
     <van-list
       style="margin-top: 75px;"
       v-model="loading"
@@ -31,14 +49,14 @@
           :key="index"
           :name="index"
           :disabled="disabled"
-          @click.native="fn($event, item, index)">
+          @click.native="clickHandler($event, item, index)">
           <div slot="title">
             <van-row>
               <van-col>
                 <img :src="fileIcoFilter(item)"/>
               </van-col>
               <van-col offset="1">
-                {{item.fileRealName}}
+                {{formatFileName(item)}}
               </van-col>
             </van-row>
           </div>
@@ -46,7 +64,7 @@
             上传时间：{{formatFileTime(item, index)}}
           </van-row>
           <van-row style="margin-top: 5px">
-            <van-button size="mini" type="danger" @click="deleteHandler(item)">删除</van-button>
+            <van-button size="mini" type="danger" @click="deleteHandler(item, index)">删除</van-button>
             <van-button v-if="item.isDir" size="mini" type="primary" @click="downloadHandler(item)">下载</van-button>
             <van-button size="mini" type="warning" @click="renameHandler(item)">重命名</van-button>
           </van-row>
@@ -68,8 +86,10 @@
 </template>
 
 <script>
-import { GetFileList } from '@/api/file'
+import { GetFileList, UploadMD5, DeleteFile, ReName } from '@/api/file'
+import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
+import { mapGetters } from 'vuex'
 export default {
   name: 'FileList',
   data () {
@@ -93,7 +113,27 @@ export default {
       disabled: false,
       show: false,
       renameRow: null,
-      newFileName: ''
+      newFileName: '',
+      uploadPopupShow: false,
+      // 文件上传
+      uploadData: {
+        parentId: -1,
+        md5Hex: '',
+        lastModifiedDate: null
+      },
+      uploadLimit: 1,
+      uploadAction: `${process.env.BASE_API}/file/fileUpload`
+    }
+  },
+  computed: {
+    ...mapGetters([
+      'popupShow',
+      'user'
+    ]),
+    title: {
+      get () {
+        return this.$route.meta.title
+      }
     }
   },
   methods: {
@@ -126,6 +166,19 @@ export default {
           return require('@/assets/file_ico/Misc_24_156416f.png')
       }
     },
+    formatFileName (row) {
+      let fileRealName = row.fileRealName
+      let fileExtName = row.fileExtName
+      let isDir = row.isDir
+      if (fileRealName.length >= 20) {
+        if (isDir) {
+          fileRealName = `${fileRealName.substring(0, 20)}....${fileExtName}`
+        } else {
+          fileRealName = `${fileRealName.substring(0, 20)}...`
+        }
+      }
+      return fileRealName
+    },
     // 格式化文件大小
     formatFileSize (row, column) {
       return util.formatFileSize(row.fileSize)
@@ -140,6 +193,7 @@ export default {
         // 加载状态结束
         this.loading = false
         this.fileList.push(...res.data.pageInfo.list)
+        this.closeAllCollapse()
         // this.pagination.pageNum++
       })
     },
@@ -153,31 +207,43 @@ export default {
           return
         }
         this.getFileList()
-      }, 300)
+      }, 150)
     },
-    getSubFileList (item) {
-      this.filters.parentId = item.id
+    // 关闭所有折叠面板
+    closeAllCollapse () {
+      this.activeNames.splice(0)
+    },
+    // 数据重新加载
+    reLoad () {
       this.loading = true
       this.finished = false
       this.fileList = []
       this.pagination.pageNum = 0
-      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
       this.onLoad()
+      this.closeAllCollapse()
+    },
+    getSubFileList (item) {
+      if (this.loading) {
+        return
+      }
+      this.filters.parentId = item.id
+      this.reLoad()
+      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
     },
     // 文件路径跳转
     jump (item, index) {
+      if (this.loading) {
+        return
+      }
       if ((this.pathStore.length === 1) || (this.pathStore.length > 1 && index + 1 === this.pathStore.length)) {
         return
       }
       this.pathStore.splice(index + 1, this.pathStore.length - 1)
       this.filters.parentId = item.parentId
-      this.loading = true
-      this.finished = false
-      this.fileList = []
-      this.pagination.pageNum = 0
-      this.getFileList()
+      this.reLoad()
     },
-    fn (event, item, index) {
+    // 折叠面板点击事件，拦截展开
+    clickHandler (event, item, index) {
       const className = event.srcElement.className
       const $vanCollapseItem = this.$refs.vanCollapse.items.find(item => {
         return index === item.name
@@ -194,38 +260,118 @@ export default {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
     },
-    deleteHandler (item) {
+    // 文件删除
+    deleteHandler (item, index) {
       this.$dialog.confirm({
         title: '提示',
         message: '确认删除？'
       }).then(res => {
-        // 删除
-        console.log(item)
+        DeleteFile({ fileSaveName: item.fileSaveName }).then(res => {
+          this.$toast.success(`删除成功！`)
+          this.$refs.vanCollapse.switch(index, false)
+          this.reLoad()
+        })
       }).catch(res => {
         // 取消
       })
     },
+    // 文件下载
     downloadHandler (item) {
       window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${item.fileSaveName}`, '_blank');
     },
+    // 重命名
     renameHandler (item) {
       this.renameRow = item
-      this.newFileName = this.renameRow.fileRealName
+      this.newFileName = item.fileRealName.substring(0, item.isDir && item.fileExtName ? item.fileRealName.lastIndexOf('.') : item.fileRealName.length)
       this.show = true;
     },
     beforeClose (action, done) {
-      console.log(action)
-      done()
+      if (action === 'confirm') {
+        if (this.newFileName) {
+          ReName({
+            parentId: this.filters.parentId,
+            fileSaveName: this.renameRow.fileSaveName,
+            fileRealName: this.newFileName + (this.renameRow.fileType === 0 ? '' : ('.' + this.renameRow.fileExtName)),
+            isDir: this.renameRow.isDir
+          }).then(res => {
+            this.$toast.success('文件重命名成功！')
+            done()
+            this.reLoad()
+          }).catch(res => {
+            done(false)
+          })
+        } else {
+          done(false)
+        }
+      } else {
+        done();
+      }
+    },
+    // 打开侧边栏
+    openPopup () {
+      this.$store.commit('openPopup')
+    },
+    openUploadPopup () {
+      this.uploadPopupShow = true
+    },
+    // 文件上传
+    // 文件数量限制
+    handleExceed (files, fileList) {
+      this.$toast(`当前限制选择 ${this.uploadLimit} 个文件，本次选择了 ${files.length} 个文件，共选择了 ${files.length + fileList.length} 个文件`);
+    },
+    // 在文件移除之前
+    beforeRemove (file, fileList) {
+      this.$toast(`移除文件"${file.name}"`);
+      this.$store.commit('delFile', file.uid)
+      return true
+    },
+    // 在文件上传之前
+    beforeUpload (file) {
+      const file_ = this.$store.getters.getFile(file.uid)
+      if (!file_) {
+        this.$toast.fail('MD5未计算完毕');
+        throw new Error('MD5未计算完毕');
+      } else {
+        this.uploadData.lastModifiedDate = file_.lastModifiedDate
+        this.uploadData.md5Hex = file_.md5Hex
+        this.uploadData.parentId = this.filters.parentId
+      }
+      if (file_.isExist) {
+        // 服务器已经存在该文件
+        UploadMD5(file_).then(res => {
+          this.$toast.success(`${file.name}上传成功！`);
+        }).catch(res => {
+        })
+        return false
+      } else {
+        // 服务器不存在该文件，需要上传
+        return true
+      }
+    },
+    handlePreview (file) {
+      console.log(file)
+    },
+    // 文件列表改变时，选择文件后开始计算文件md5值
+    onFileChange (file, fileList) {
+      if (file.status === 'ready') {
+        GetFileMD5(file.raw, file.uid, this.filters.parentId)
+      }
+    },
+    // 文件手动上传
+    submitUpload () {
+      this.$refs.upload.submit();
+    },
+    uploadPopupCloseHandler () {
+      this.$refs.upload.clearFiles();
+      this.$store.commit('clearFile')
+      this.reLoad()
     }
   }
 }
 </script>
 
-<style scoped>
-  .float-left {
-    text-align: left;
-  }
-  .nav {
+<style rel="stylesheet/scss" lang="scss" scoped>
+  .my-nav {
     top: 46px;
     left: 0;
     width: 100%;
@@ -243,18 +389,10 @@ export default {
   .breadcrumb-item {
     margin-left: 5px;
   }
-  /*.nav::after {*/
-    /*content: ' ';*/
-    /*position: absolute;*/
-    /*pointer-events: none;*/
-    /*-webkit-box-sizing: border-box;*/
-    /*box-sizing: border-box;*/
-    /*top: -50%;*/
-    /*left: -50%;*/
-    /*right: -50%;*/
-    /*bottom: -50%;*/
-    /*-webkit-transform: scale(.5);*/
-    /*transform: scale(.5);*/
-    /*border: 0 solid #ebedf0;*/
-  /*}*/
+  .avatar-top {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    box-shadow:1px 1px 3px #333333;
+  }
 </style>

@@ -19,4 +19,8 @@ export default {
    color: #2c3e50;
    margin-top: 60px;
  }
+.van-nav-bar__left {
+  left: 15px;
+  top: 8px;
+}
 </style>

@@ -8,8 +8,12 @@ import Vant from 'vant'
 import 'vant/lib/index.css'
 import './styles/iconfont.css'
 import NetdiskConstant from '@/utils/NetdiskConstant'
+import ElementUI from 'element-ui'
+import 'element-ui/lib/theme-chalk/index.css'
+import 'element-ui/lib/theme-chalk/display.css'
 
 Vue.use(Vant)
+Vue.use(ElementUI)
 
 Vue.prototype.$NetdiskConstant = NetdiskConstant
 Vue.config.productionTip = false

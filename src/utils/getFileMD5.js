@@ -1,5 +1,5 @@
 import SparkMD5 from 'spark-md5'
-import ElementUI from 'element-ui'
+import { Toast } from 'vant';
 import { CheckMd5 } from '@/api/file'
 import store from '../store'
 
@@ -19,12 +19,8 @@ export default function GetFileMD5 (file, uid, parentId) {
   let fileSize = file.size;
   let fileRealName = file.name;
   let lastModifiedDate = file.lastModifiedDate.getTime();
-  if (fileSize > 1024 * 1024 * 500) {
-    ElementUI.Notification.error({
-      title: 'error',
-      message: '文件过大，请重新选择',
-      duration: 2000
-    });
+  if (fileSize > 1024 * 1024 * 100) {
+    Toast.fail('文件过大，请重新选择');
     return;
   }
   let chunkSize = 2097152;

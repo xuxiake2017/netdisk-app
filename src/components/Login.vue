@@ -7,7 +7,7 @@
     </van-row>
     <van-field
       style="margin-bottom: 10px"
-      left-icon="user"
+      left-icon="my-user"
       v-model="loginData.loginInfo"
       center
       clearable
@@ -15,7 +15,7 @@
     ></van-field>
     <van-field
       style="margin-bottom: 10px"
-      left-icon="cloud-lock"
+      left-icon="my-cloud-lock"
       :right-icon="icon"
       :type="type"
       v-model="loginData.password"
@@ -41,7 +41,8 @@
 </template>
 
 <script>
-import { RequestLogin, CheckUserName, CheckPhone, CheckEmail, CheckImgCode, SendCodeToPhone, Register } from '@/api/user'
+import { RequestLogin } from '@/api/user'
+import { setToken } from '@/utils/auth'
 export default {
   data () {
     return {
@@ -52,17 +53,17 @@ export default {
       },
       captchaSrc: process.env.BASE_API + '/user/createImg',
       loading: false,
-      icon: 'close-eye',
+      icon: 'my-close-eye',
       type: 'password'
     }
   },
   methods: {
     clickRightIconHandler () {
-      if (this.icon === 'close-eye') {
-        this.icon = 'open-eye'
+      if (this.icon === 'my-close-eye') {
+        this.icon = 'my-open-eye'
         this.type = 'text'
       } else {
-        this.icon = 'close-eye'
+        this.icon = 'my-close-eye'
         this.type = 'password'
       }
     },
@@ -76,6 +77,8 @@ export default {
         this.loading = true
         RequestLogin({ ...this.loginData }).then(res => {
           this.loading = false
+          this.$store.commit('storeUser', res.data)
+          setToken(res.data.token)
           this.$router.push({ path: '/fileList' })
         }).catch(res => {
           this.loading = false
