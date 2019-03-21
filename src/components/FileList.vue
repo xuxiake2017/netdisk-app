@@ -9,6 +9,7 @@
           :before-upload="beforeUpload"
           :on-preview="handlePreview"
           :on-change="onFileChange"
+          :on-success="onSuccess"
           :with-credentials="true"
           :auto-upload="false"
           :limit="uploadLimit"
@@ -90,8 +91,10 @@ import { GetFileList, UploadMD5, DeleteFile, ReName } from '@/api/file'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
+import usermixin from '@/mixins/userInfo'
 export default {
   name: 'FileList',
+  mixins: [usermixin],
   data () {
     return {
       pathStore: [
@@ -270,6 +273,7 @@ export default {
           this.$toast.success(`删除成功！`)
           this.$refs.vanCollapse.switch(index, false)
           this.reLoad()
+          this.getInfo();
         })
       }).catch(res => {
         // 取消
@@ -327,6 +331,12 @@ export default {
     },
     // 在文件上传之前
     beforeUpload (file) {
+      const user = this.user
+      const availableMemory = user.availableMemory
+      if (file.size > availableMemory) {
+        this.$toast.fail('剩余空间不足，请删除部分文件再试');
+        throw new Error('剩余空间不足，请删除部分文件再试');
+      }
       const file_ = this.$store.getters.getFile(file.uid)
       if (!file_) {
         this.$toast.fail('MD5未计算完毕');
@@ -340,6 +350,7 @@ export default {
         // 服务器已经存在该文件
         UploadMD5(file_).then(res => {
           this.$toast.success(`${file.name}上传成功！`);
+          this.getInfo()
         }).catch(res => {
         })
         return false
@@ -356,6 +367,10 @@ export default {
       if (file.status === 'ready') {
         GetFileMD5(file.raw, file.uid, this.filters.parentId)
       }
+    },
+    // 文件上传成功时的钩子
+    onSuccess (response, file, fileList) {
+      this.getInfo()
     },
     // 文件手动上传
     submitUpload () {

@@ -12,13 +12,13 @@
       :finished="finished"
       finished-text="没有更多了"
       @load="onLoad">
-      <div v-for="(item, index) in imgList" :key="index">
+      <div v-for="(item, index) in imgList" :key="index" class="img-cell">
         <el-alert
           :title="item.dayTime"
           :type="alertTypes[index % alertTypes.length]"
           :closable="false">
         </el-alert>
-        <img v-for="(item1, j) in item.imgList" :key="j" :style="`background: url('${item1.msrc}') no-repeat center center;`" class="img-cell" @click="previewImg(imgList, index, j)">
+        <img v-for="(item1, j) in item.imgList" :key="j" :style="`background: url('${item1.msrc}') no-repeat center center;`" class="my-img" @click="previewImg(imgList, index, j)">
       </div>
     </van-list>
   </div>
@@ -134,7 +134,6 @@ export default {
           flag++
         })
       })
-      console.log(urls)
       ImagePreview({
         images: urls,
         startPosition: startPosition,
@@ -158,7 +157,7 @@ export default {
 }
 </script>
 
-<style scoped>
+<style rel="stylesheet/scss" lang="scss" scoped>
   .avatar-top {
     width: 30px;
     height: 30px;
@@ -166,11 +165,15 @@ export default {
     box-shadow:1px 1px 3px #333333;
   }
   .img-cell {
-    background-size:100% auto;
-    width: 300px;
-    height: 300px;
-    margin: 10px 30px;
-    box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
-    box-sizing: border-box;
+    text-align: center;
+    .my-img {
+      background-size:100% auto;
+      width: 300px;
+      height: 300px;
+      margin: 10px 30px;
+      margin: 10px 10px;
+      box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.4);
+      box-sizing: border-box;
+    }
   }
 </style>
