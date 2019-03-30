@@ -21,10 +21,6 @@
         </el-upload>
       </van-row>
     </van-popup>
-    <van-nav-bar :title="title" :fixed="true" @click-left="openPopup" @click-right="openUploadPopup">
-      <van-icon name="my-fileupload" slot="right" :size="'20px'"/>
-      <img :src="user.avatar" class="avatar-top" slot="left"/>
-    </van-nav-bar>
     <div class="my-nav">
       <van-row class="breadcrumb">
         <van-col class="breadcrumb-item" v-for="(item, index) in pathStore" :key="index">
@@ -90,7 +86,6 @@
 import { GetFileList, UploadMD5, DeleteFile, ReName } from '@/api/file'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
-import { mapGetters } from 'vuex'
 import usermixin from '@/mixins/userInfo'
 export default {
   name: 'FileList',
@@ -117,7 +112,6 @@ export default {
       show: false,
       renameRow: null,
       newFileName: '',
-      uploadPopupShow: false,
       // 文件上传
       uploadData: {
         parentId: -1,
@@ -129,13 +123,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([
-      'popupShow',
-      'user'
-    ]),
-    title: {
+    uploadPopupShow: {
       get () {
-        return this.$route.meta.title
+        return this.$store.getters.uploadPopupShow
+      },
+      set (val) {
+        this.$store.commit('toggleUploadPopup', val)
       }
     }
   },
@@ -311,13 +304,6 @@ export default {
         done();
       }
     },
-    // 打开侧边栏
-    openPopup () {
-      this.$store.commit('openPopup')
-    },
-    openUploadPopup () {
-      this.uploadPopupShow = true
-    },
     // 文件上传
     // 文件数量限制
     handleExceed (files, fileList) {
@@ -403,11 +389,5 @@ export default {
   }
   .breadcrumb-item {
     margin-left: 5px;
-  }
-  .avatar-top {
-    width: 30px;
-    height: 30px;
-    border-radius: 15px;
-    box-shadow:1px 1px 3px #333333;
   }
 </style>

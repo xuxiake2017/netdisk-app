@@ -1,9 +1,5 @@
 <template>
   <div>
-    <van-nav-bar :title="title" :fixed="true" @click-left="openPopup">
-      <van-button type="primary" @click="goBack" slot="right" size="mini">返回</van-button>
-      <img :src="user.avatar" class="avatar-top" slot="left"/>
-    </van-nav-bar>
     <div v-if="imgList.length === 0">
       <el-alert title="您的相册空空如也，赶快上传点东西吧" :closable="false"></el-alert>
     </div>
@@ -25,7 +21,6 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
 import VuePreview from 'vue-preview'
 import Vue from 'vue'
 import ToImgList from '@/api/img'
@@ -54,13 +49,6 @@ export default {
     }
   },
   methods: {
-    goBack () {
-      this.$router.go(-1)
-    },
-    // 打开侧边栏
-    openPopup () {
-      this.$store.commit('openPopup')
-    },
     handleClose () {
       console.log('close event')
     },
@@ -142,28 +130,11 @@ export default {
         }
       });
     }
-  },
-  computed: {
-    ...mapGetters([
-      'popupShow',
-      'user'
-    ]),
-    title: {
-      get () {
-        return this.$route.meta.title
-      }
-    }
   }
 }
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-  .avatar-top {
-    width: 30px;
-    height: 30px;
-    border-radius: 15px;
-    box-shadow:1px 1px 3px #333333;
-  }
   .img-cell {
     text-align: center;
     .my-img {

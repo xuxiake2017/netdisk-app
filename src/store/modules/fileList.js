@@ -1,7 +1,9 @@
 export default {
   state: {
     // 储存待上传的文件
-    fileList: []
+    fileList: [],
+    // 上传模态框标记
+    uploadPopupShow: false
   },
   mutations: {
     storeFile (state, file) {
@@ -19,6 +21,9 @@ export default {
     },
     clearFile (state) {
       state.fileList.length = 0
+    },
+    toggleUploadPopup (state, val) {
+      state.uploadPopupShow = val
     }
   },
   actions: {},
@@ -26,6 +31,7 @@ export default {
     'getFileList': state => state.fileList,
     'getFile': (state) => (uid) => {
       return state.fileList.find(file => file.uid === uid)
-    }
+    },
+    uploadPopupShow: state => state.uploadPopupShow
   }
 }

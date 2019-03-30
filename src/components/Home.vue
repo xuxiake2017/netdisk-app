@@ -22,12 +22,18 @@
         </van-cell>
       </van-row>
     </van-popup>
+    <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
+      <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
+      <van-button v-if="$route.name === 'gallery'" type="primary" slot="right" size="mini">返回</van-button>
+      <img :src="user.avatar" class="avatar-top" slot="left"/>
+    </van-nav-bar>
     <router-view></router-view>
   </div>
 </template>
 
 <script>
 import { Logout } from '@/api/user'
+import { mapGetters } from 'vuex'
 export default {
   name: 'Home',
   data () {
@@ -44,9 +50,20 @@ export default {
         this.$store.commit('togglePopup', val)
       }
     },
-    user: {
+    ...mapGetters([
+      'user'
+    ]),
+    title: {
       get () {
-        return this.$store.getters.user
+        return this.$route.meta.title
+      }
+    },
+    uploadPopupShow: {
+      get () {
+        return this.$store.getters.uploadPopupShow
+      },
+      set (val) {
+        this.$store.commit('toggleUploadPopup', val)
       }
     }
   },
@@ -67,6 +84,18 @@ export default {
     jump (path) {
       this.popupShow = false
       this.$router.push({ path })
+    },
+    // 导航栏左边点击处理器（打开侧边栏）
+    clickLeftHandler () {
+      this.popupShow = true
+    },
+    // 导航栏右边点击处理器
+    clickRightHandler () {
+      if (this.$route.name === 'fileList') {
+        this.uploadPopupShow = true
+      } else if (this.$route.name === 'gallery') {
+        this.$router.go(-1)
+      }
     }
   },
   mounted () {
@@ -104,6 +133,12 @@ export default {
       .username {
         font-weight: bold;
       }
+    }
+    .avatar-top {
+      width: 30px;
+      height: 30px;
+      border-radius: 15px;
+      box-shadow:1px 1px 3px #333333;
     }
   }
 </style>

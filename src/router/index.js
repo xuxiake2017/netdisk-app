@@ -26,6 +26,7 @@ const routes = [
     children: [
       {
         path: 'fileList',
+        name: 'fileList',
         meta: {
           title: '文件列表',
           icon: 'my-file'
@@ -34,6 +35,7 @@ const routes = [
       },
       {
         path: 'gallery',
+        name: 'gallery',
         meta: {
           title: '相册',
           icon: 'my-gallery'
