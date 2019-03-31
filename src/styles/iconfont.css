@@ -44,3 +44,10 @@
   content: "\e62e";
 }
 
+.van-icon-my-mkdir:before {
+  content: "\e69c";
+}
+
+.van-icon-my-dir:before {
+  content: "\e605";
+}

@@ -64,52 +64,101 @@
             <van-button size="mini" type="danger" @click="deleteHandler(item, index)">删除</van-button>
             <van-button v-if="item.isDir" size="mini" type="primary" @click="downloadHandler(item)">下载</van-button>
             <van-button size="mini" type="warning" @click="renameHandler(item)">重命名</van-button>
+            <van-button size="mini" type="default" @click="mvFileHandler(item, index)">移动</van-button>
           </van-row>
         </van-collapse-item>
       </van-collapse>
     </van-list>
+    <!--新建文件夹、重命名对话框-->
     <van-dialog
       v-model="show"
       show-cancel-button
       :before-close="beforeClose"
     >
-      <van-field
-        style="margin: 10px 0"
-        v-model="newFileName"
-        placeholder="请输入文件名"
-      />
+      <div v-if="action === 'rename'">
+        <div class="van-dialog__header">
+          <span>重命名</span>
+        </div>
+        <van-field
+          style="margin: 10px 0"
+          v-model="newFileName"
+          placeholder="请输入文件名"
+        />
+      </div>
+      <div v-if="action === 'mkdir'">
+        <div class="van-dialog__header">
+          <span>新建文件夹</span>
+        </div>
+        <van-field
+          style="margin: 10px 0"
+          v-model="newDir"
+          placeholder="请输入文件夹名"
+        />
+      </div>
+      <div v-if="action === 'mvfile'">
+        <div class="van-dialog__header">
+          <span>移动文件</span>
+        </div>
+        <el-tree
+          style="margin: 5px 5px;"
+          v-if="hackReset"
+          highlight-current
+          :default-expanded-keys="[-1]"
+          check-on-click-node
+          ref="tree"
+          :lazy="true"
+          :load="loadChildTree"
+          accordion
+          :data="dirs"
+          node-key="id"
+          :expand-on-click-node="false">
+          <span class="custom-tree-node" slot-scope="{ node, data }">
+            <van-icon name="my-dir"/>
+            <span>{{ node.label }}</span>
+          </span>
+        </el-tree>
+      </div>
     </van-dialog>
+    <!--固定定位的新建文件夹按钮-->
+    <div class="mkdir-suspend-btn" @click="mkdirHandler">
+      <van-icon name="my-mkdir" :size="'25px'"/>
+    </div>
   </div>
 </template>
 
 <script>
-import { GetFileList, UploadMD5, DeleteFile, ReName } from '@/api/file'
+import { GetFileList, UploadMD5, ListAllDir, MkDir, MoveFile, DeleteFile, ReName } from '@/api/file'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
 import usermixin from '@/mixins/userInfo'
+import { mapGetters } from 'vuex'
 export default {
   name: 'FileList',
   mixins: [usermixin],
   data () {
     return {
+      // 储存文件树路径
       pathStore: [
         {parentId: -1, fileRealName: '全部文件'}
       ],
+      // 查询过滤条件
       filters: {
         parentId: -1,
         fileRealName: ''
       },
+      // 分页参数
       pagination: {
         total: 0,
         pageNum: 0,
         pageSize: 20
       },
+      // 文件列表
       fileList: [],
       loading: false,
       finished: false,
       activeNames: [],
       disabled: false,
-      show: false,
+      // 重命名
       renameRow: null,
       newFileName: '',
       // 文件上传
@@ -119,7 +168,19 @@ export default {
         lastModifiedDate: null
       },
       uploadLimit: 1,
-      uploadAction: `${process.env.BASE_API}/file/fileUpload`
+      uploadAction: `${process.env.BASE_API}/file/fileUpload`,
+      // 管理对话框
+      show: false,
+      action: '',
+      // 新建文件夹
+      newDir: '',
+      // 文件移动
+      mvfileShow: false,
+      // 用于树组件的销毁
+      hackReset: false,
+      dirs: [],
+      movedFileSaveName: '',
+      movedId: 0
     }
   },
   computed: {
@@ -130,7 +191,10 @@ export default {
       set (val) {
         this.$store.commit('toggleUploadPopup', val)
       }
-    }
+    },
+    ...mapGetters([
+      'user'
+    ])
   },
   methods: {
     // 显示文件图标
@@ -162,15 +226,15 @@ export default {
           return require('@/assets/file_ico/Misc_24_156416f.png')
       }
     },
+    // 文件名过长截取
     formatFileName (row) {
       let fileRealName = row.fileRealName
-      let fileExtName = row.fileExtName
       let isDir = row.isDir
       if (fileRealName.length >= 20) {
         if (isDir) {
-          fileRealName = `${fileRealName.substring(0, 20)}....${fileExtName}`
+          fileRealName = `${fileRealName.substring(0, 10)}...${fileRealName.substring(fileRealName.length - 10, fileRealName.length)}`
         } else {
-          fileRealName = `${fileRealName.substring(0, 20)}...`
+          fileRealName = `${fileRealName.substring(0, 15)}...${fileRealName.substring(fileRealName.length - 5, fileRealName.length)}`
         }
       }
       return fileRealName
@@ -278,30 +342,95 @@ export default {
     },
     // 重命名
     renameHandler (item) {
+      this.action = 'rename'
       this.renameRow = item
       this.newFileName = item.fileRealName.substring(0, item.isDir && item.fileExtName ? item.fileRealName.lastIndexOf('.') : item.fileRealName.length)
       this.show = true;
     },
+    reName (done) {
+      ReName({
+        parentId: this.filters.parentId,
+        fileSaveName: this.renameRow.fileSaveName,
+        fileRealName: this.newFileName + (this.renameRow.fileType === 0 ? '' : ('.' + this.renameRow.fileExtName)),
+        isDir: this.renameRow.isDir
+      }).then(res => {
+        this.$toast.success('文件重命名成功！')
+        done()
+        this.reLoad()
+        this.newFileName = ''
+      }).catch(res => {
+        done(false)
+      })
+    },
+    mkdirHandler () {
+      this.action = 'mkdir'
+      this.show = true
+    },
+    mkDir (done) {
+      MkDir({fileRealName: this.newDir, parentId: this.filters.parentId}).then(res => {
+        this.$toast.success(`文件夹"${this.newDir}"新建成功！`)
+        this.reLoad()
+        this.newDir = ''
+        done()
+      }).catch(res => {
+        done(false)
+      })
+    },
+    // 验证文件（夹）名是否合法
+    verifyFileName (fileName) {
+      const reg1 = /^[^ ,./\\][\S]{0,20}$/
+      if (!reg1.test(fileName)) {
+        return false
+      }
+      const reg2 = /[/\\]+/
+      if (reg2.test(fileName)) {
+        return false
+      }
+      return true
+    },
     beforeClose (action, done) {
-      if (action === 'confirm') {
-        if (this.newFileName) {
-          ReName({
-            parentId: this.filters.parentId,
-            fileSaveName: this.renameRow.fileSaveName,
-            fileRealName: this.newFileName + (this.renameRow.fileType === 0 ? '' : ('.' + this.renameRow.fileExtName)),
-            isDir: this.renameRow.isDir
-          }).then(res => {
-            this.$toast.success('文件重命名成功！')
+      switch (this.action) {
+        case 'rename':
+          if (action === 'confirm') {
+            if (this.newFileName) {
+              if (this.verifyFileName(this.newFileName)) {
+                this.reName(done)
+              } else {
+                this.$toast('文件名不合法！')
+                done(false)
+              }
+            } else {
+              this.$toast('文件名不能为空！')
+              done(false)
+            }
+          } else {
             done()
-            this.reLoad()
-          }).catch(res => {
-            done(false)
-          })
-        } else {
-          done(false)
-        }
-      } else {
-        done();
+          }
+          break
+        case 'mkdir':
+          if (action === 'confirm') {
+            if (this.newDir) {
+              if (this.verifyFileName(this.newDir)) {
+                this.mkDir(done)
+              } else {
+                this.$toast('文件夹名不合法！')
+                done(false)
+              }
+            } else {
+              this.$toast('文件夹名不能为空！')
+              done(false)
+            }
+          } else {
+            done()
+            this.newDir = ''
+          }
+          break
+        case 'mvfile':
+          if (action === 'confirm') {
+            this.mvFile(done)
+          } else {
+            done()
+          }
       }
     },
     // 文件上传
@@ -366,6 +495,71 @@ export default {
       this.$refs.upload.clearFiles();
       this.$store.commit('clearFile')
       this.reLoad()
+    },
+    // 文件移动
+    // 查询所有文件夹
+    listAllDir (parentId, resolve) {
+      ListAllDir({parentId}).then(res => {
+        let nodes = []
+        res.data.forEach((value, index) => {
+          let node = {}
+          node['id'] = value.id
+          node['label'] = value.fileRealName
+          nodes.push(node)
+        })
+        resolve(nodes)
+      })
+    },
+    // 树的加载函数
+    loadChildTree (node, resolve) {
+      if (!node.key) {
+        let nodes = []
+        let node_ = {}
+        node_['id'] = -1
+        node_['label'] = '/'
+        nodes.push(node_)
+        resolve(nodes)
+      } else {
+        if (this.movedId === node.key) {
+          this.$toast('不能移动到自身及其子目录！')
+          resolve([])
+        } else {
+          this.listAllDir(node.key, resolve)
+        }
+      }
+    },
+    // 打开文件移动对话框
+    mvFileHandler (row, index) {
+      this.action = 'mvfile'
+      this.movedFileSaveName = row.fileSaveName
+      this.movedId = row.id
+      this.show = true
+      this.hackReset = false;// 销毁组件
+      this.$nextTick(() => {
+        this.hackReset = true;// 重建组件
+      });
+    },
+    // 移动文件
+    mvFile (done) {
+      let parentId = this.$refs.tree.getCurrentKey()
+      if (!parentId) {
+        this.$toast('请选择文件夹！')
+        done(false)
+        return
+      }
+      if (this.movedId === parentId) {
+        this.$toast('不能移动到自身及其子目录！')
+        done(false)
+      } else {
+        MoveFile({parentId: parentId, fileSaveName: this.movedFileSaveName}).then(res => {
+          done()
+          this.$toast.success(`文件移动成功！`)
+          this.mvfileShow = false
+          this.reLoad()
+        }).catch(res => {
+          done(false)
+        })
+      }
     }
   }
 }
@@ -389,5 +583,17 @@ export default {
   }
   .breadcrumb-item {
     margin-left: 5px;
+  }
+  .mkdir-suspend-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 15px;
+    box-shadow:1px 1px 3px #333333;
+    background-color: #FFFFFF;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    text-align: center;
+    line-height: 30px;
   }
 </style>

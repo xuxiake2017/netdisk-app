@@ -115,7 +115,7 @@ export default {
       let flag = 0
       imgList.forEach((item1, index1) => {
         item1.imgList.forEach((item2, index2) => {
-          urls.push(item2.src)
+          urls.push(item2.msrc)
           if (i === index1 && j === index2) {
             startPosition = flag
           }
