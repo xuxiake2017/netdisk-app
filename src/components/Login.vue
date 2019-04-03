@@ -124,10 +124,7 @@ export default {
     padding: 35px 15px 35px 15px;
     background: #fff;
     border: 1px solid #eaeaea;
-    box-shadow: 0 0 25px #5f5f5f;
-    position: absolute;
-    left: 0;
-    right: 0;
+    box-shadow: 0 0 25px #7d7d7d;
     margin: 40px auto auto;
   }
   .login-title {
