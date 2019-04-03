@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="gallery">
     <div v-if="imgList.length === 0">
       <el-alert title="您的相册空空如也，赶快上传点东西吧" :closable="false"></el-alert>
     </div>
@@ -135,6 +135,9 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
+  .gallery {
+    margin-top: 60px;
+  }
   .img-cell {
     text-align: center;
     .my-img {

@@ -1,43 +1,49 @@
 <template>
-  <van-row>
-    <van-row type="flex" justify="center" style="margin-bottom: 10px">
-      <van-col >
-        <span style="font-weight: bold; font-size: 20px;">系统登录</span>
-      </van-col>
-    </van-row>
-    <van-field
-      style="margin-bottom: 10px"
-      left-icon="my-user"
-      v-model="loginData.loginInfo"
-      center
-      clearable
-      placeholder="请输入用户名"
-    ></van-field>
-    <van-field
-      style="margin-bottom: 10px"
-      left-icon="my-cloud-lock"
-      :right-icon="icon"
-      :type="type"
-      v-model="loginData.password"
-      center
-      clearable
-      placeholder="请输入密码"
-      @click-right-icon="clickRightIconHandler"
-    ></van-field>
-    <div style="position: relative">
+  <div class="login-outter" :style="{'height': `${clientHeight}px`}">
+    <div>
+      <img src="../assets/avatar.jpg" class="login-avatar"/>
+    </div>
+    <van-row class="login-field">
+      <van-row type="flex" justify="center" style="margin-bottom: 10px">
+        <van-col >
+          <span class="login-title">系统登录</span>
+        </van-col>
+      </van-row>
       <van-field
-        style="margin-bottom: 10px"
-        v-model="loginData.imgCode"
+        class="login-input"
+        left-icon="my-user"
+        v-model="loginData.loginInfo"
         center
         clearable
-        placeholder="请输入验证码"
+        placeholder="请输入用户名"
       ></van-field>
-      <div style="position: absolute; right: 10px; top: 10px;">
-        <img :src="captchaSrc" @click="changeCaptcha"/>
+      <van-field
+        class="login-input"
+        left-icon="my-cloud-lock"
+        :right-icon="icon"
+        :type="type"
+        v-model="loginData.password"
+        center
+        clearable
+        placeholder="请输入密码"
+        @click-right-icon="clickRightIconHandler"
+      ></van-field>
+      <div style="position: relative">
+        <van-field
+          class="login-input"
+          v-model="loginData.imgCode"
+          left-icon="my-captcha"
+          center
+          clearable
+          placeholder="请输入验证码"
+        ></van-field>
+        <div class="login-captcha">
+          <img :src="captchaSrc" @click="changeCaptcha"/>
+        </div>
       </div>
-    </div>
-    <van-button type="primary" style="width: 60%" @click="loginHandler" :loading="loading">登录</van-button>
-  </van-row>
+      <van-button type="primary" style="width: 60%" @click="loginHandler" :loading="loading">登录</van-button>
+    </van-row>
+  </div>
 </template>
 
 <script>
@@ -54,7 +60,8 @@ export default {
       captchaSrc: process.env.BASE_API + '/user/createImg',
       loading: false,
       icon: 'my-close-eye',
-      type: 'password'
+      type: 'password',
+      clientHeight: ''
     }
   },
   methods: {
@@ -85,10 +92,54 @@ export default {
         })
       }
     }
+  },
+  created () {
+    this.clientHeight = `${document.documentElement.clientHeight}`
+    window.addEventListener('resize', () => {
+      this.clientHeight = `${document.documentElement.clientHeight}`
+    })
   }
 }
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
-<style scoped>
+<style rel="stylesheet/scss" lang="scss" scoped>
+  .login-outter {
+    width: 100%;
+    position: relative;
+    margin: 0 0;
+    background-size: auto;
+    background: url("../assets/login_bg.jpg") no-repeat center;
+  }
+  .login-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 40px 40px;
+    margin-top: 50px;
+    box-shadow:2px 2px 4px #333333;
+  }
+  .login-field {
+    width: 80%;
+    border-radius: 5px;
+    padding: 35px 15px 35px 15px;
+    background: #fff;
+    border: 1px solid #eaeaea;
+    box-shadow: 0 0 25px #5f5f5f;
+    position: absolute;
+    left: 0;
+    right: 0;
+    margin: 40px auto auto;
+  }
+  .login-title {
+    font-weight: bold;
+    font-size: 20px;
+  }
+  .login-input {
+    margin-bottom: 10px;
+  }
+  .login-captcha {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+  }
 </style>

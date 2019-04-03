@@ -51,3 +51,7 @@
 .van-icon-my-dir:before {
   content: "\e605";
 }
+
+.van-icon-my-captcha:before {
+  content: "\e62f";
+}
