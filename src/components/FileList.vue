@@ -197,34 +197,8 @@ export default {
     ])
   },
   methods: {
-    // 显示文件图标
     fileIcoFilter (row) {
-      switch (row.fileType) {
-        case this.$NetdiskConstant.FILE_TYPE_OF_DIR :
-          return require('@/assets/file_ico/Folder_24_e0cacad.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_TXT :
-          return require('@/assets/file_ico/Text_24_dd1b3d8.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_WORD :
-          return require('@/assets/file_ico/Word_24_1e078ab.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_EXCEL :
-          return require('@/assets/file_ico/Excel_24_614e53a.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_POWERPOINT :
-          return require('@/assets/file_ico/PPT_24_0af6886.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_PDF :
-          return require('@/assets/file_ico/PDF_24_5caf7bf.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_PIC :
-          return require('@/assets/file_ico/Picture_24_dd06d30.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC :
-          return require('@/assets/file_ico/Music_24_04cf4b7.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO :
-          return require('@/assets/file_ico/Video_24_499ddeb.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_ZIP :
-          return require('@/assets/file_ico/ZIP_24_3670294.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_APK :
-          return require('@/assets/file_ico/Android_24_a529a3a.png')
-        case this.$NetdiskConstant.FILE_TYPE_OF_OTHER :
-          return require('@/assets/file_ico/Misc_24_156416f.png')
-      }
+      return util.fileIcoFilter(row.fileType)
     },
     // 文件名过长截取
     formatFileName (row) {

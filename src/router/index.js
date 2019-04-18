@@ -4,6 +4,8 @@ import Login from '@/components/Login'
 import FileList from '@/components/FileList'
 import Gallery from '@/components/Gallery'
 import Home from '@/components/Home'
+import AccessShareFile from '@/components/AccessShareFile'
+import NotFound from '@/components/404'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
@@ -18,6 +20,18 @@ const routes = [
     name: 'Login',
     hidden: true,
     component: Login
+  },
+  {
+    path: '/404',
+    component: NotFound,
+    name: 'NotFound',
+    hidden: true
+  },
+  {
+    path: '/home/s/:shareId',
+    component: AccessShareFile,
+    name: 'AccessShareFile',
+    hidden: true
   },
   {
     path: '/',
