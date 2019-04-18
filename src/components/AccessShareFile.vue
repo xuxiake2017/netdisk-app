@@ -2,8 +2,47 @@
   <div>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
       <van-icon name="home-o" slot="right" :size="'20px'"/>
-      <img :src="user.avatar" class="avatar-top" slot="left"/>
+      <img :src="shareFile.avatar" class="avatar-top" slot="left"/>
     </van-nav-bar>
+    <div class="my-nav">
+      <van-row class="breadcrumb">
+        <van-col class="breadcrumb-item" v-for="(item, index) in pathStore" :key="index">
+          <a href="" @click.prevent="jump(item, index)">{{item.fileRealName}}</a>
+          <span>/</span>
+        </van-col>
+      </van-row>
+    </div>
+    <div style="margin-top: 75px; text-align: left;">
+      <van-collapse
+        v-model="activeNames"
+        ref="vanCollapse"
+        :accordion="false">
+        <van-collapse-item
+          v-for="(item, index) in fileList"
+          :key="index"
+          :name="index"
+          :disabled="disabled"
+          @click.native="clickHandler($event, item, index)">
+          <div slot="title">
+            <van-row>
+              <van-col>
+                <img :src="fileIcoFilter(item)"/>
+              </van-col>
+              <van-col offset="1">
+                {{formatFileName(item)}}
+              </van-col>
+            </van-row>
+          </div>
+          <van-row>
+            上传时间：{{formatFileTime(item, index)}}
+          </van-row>
+          <van-row style="margin-top: 5px">
+            <van-button v-if="item.isDir" size="mini" type="primary" @click="handleDownload(index, item)">下载</van-button>
+            <van-button size="mini" type="warning" @click="handleSaveToCloud(index, item)" style="width: 60px">保存到网盘</van-button>
+          </van-row>
+        </van-collapse-item>
+      </van-collapse>
+    </div>
     <van-dialog
       v-model="pwdDialogVisible"
       :title="`'${shareFile.shareUser}'给您加密分享了文件`"
@@ -39,14 +78,18 @@ export default {
         shareId: '',
         sharePwd: '',
         shareTime: null,
-        shareUser: ''
+        shareUser: '',
+        avatar: ''
       },
       pwdDialogVisible: false,
+      // 文件列表
       fileList: null,
-      listLoading: false,
+      // 储存文件树路径
       pathStore: [
         {parentId: null, fileRealName: '全部文件'}
-      ]
+      ],
+      activeNames: [],
+      disabled: false
     }
   },
   computed: {
@@ -113,8 +156,84 @@ export default {
     },
     // 查询子目录
     getSublist (parentId) {
+      this.closeAllCollapse()
       GetSubList({shareId: this.shareFile.shareId, sharePwd: this.shareFile.sharePwd, parentId}).then(res => {
         this.fileList = res.data.files
+      })
+    },
+    getSublistClick (item) {
+      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
+      this.getSublist(item.id)
+    },
+    fileIcoFilter (row) {
+      return util.fileIcoFilter(row.fileType)
+    },
+    // 文件名过长截取
+    formatFileName (row) {
+      return util.formatFileName(row.fileRealName, row.isDir)
+    },
+    // 格式化文件大小
+    formatFileSize (row, column) {
+      return util.formatFileSize(row.fileSize)
+    },
+    // 格式化文件时间
+    formatFileTime (row, column) {
+      return util.formatDate.format(new Date(row.uploadTime), 'yyyy-MM-dd hh:mm:ss')
+    },
+    // 折叠面板点击事件，拦截展开
+    clickHandler (event, item, index) {
+      const className = event.srcElement.className
+      const $vanCollapseItem = this.$refs.vanCollapse.items.find(item => {
+        return index === item.name
+      })
+      if (className.indexOf('van-cell__right-icon') !== -1) {
+        this.$refs.vanCollapse.switch(index, $vanCollapseItem.expanded)
+      } else if (className.indexOf('van-button') !== -1) {
+      } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
+        this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        if (item.isDir === 0) {
+          this.getSublistClick(item)
+        }
+      } else {
+        this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+      }
+    },
+    // 文件路径跳转
+    jump (item, index) {
+      if ((this.pathStore.length === 1) || (this.pathStore.length > 1 && index + 1 === this.pathStore.length)) {
+        return
+      }
+      this.pathStore.splice(index + 1, this.pathStore.length - 1)
+      this.getSublist(item.parentId)
+    },
+    // 关闭所有折叠面板
+    closeAllCollapse () {
+      this.activeNames.splice(0)
+    },
+    // 下载
+    handleDownload (index, row) {
+      if (row) {
+        window.open(`${process.env.BASE_API}/share/download?shareId=${this.shareFile.shareId}&sharePwd=${this.shareFile.sharePwd}&fileId=${row.id}`, '_blank')
+      } else {
+        window.open(`${process.env.BASE_API}/share/download?shareId=${this.shareFile.shareId}&sharePwd=${this.shareFile.sharePwd}`, '_blank')
+      }
+    },
+    // 保存到网盘
+    handleSaveToCloud (index, row) {
+      let param = {}
+      if (index && row) {
+        param = {shareId: this.shareFile.shareId, sharePwd: this.shareFile.sharePwd, fileId: row.id}
+      } else {
+        param = {shareId: this.shareFile.shareId, sharePwd: this.shareFile.sharePwd}
+      }
+      SaveToCloud({ ...param }).then(res => {
+        this.$toast(res.msg)
+      }).catch(res => {
+        if (res.data.code === 20141) {
+          window.setTimeout(() => {
+            this.$router.push({ path: '/login' })
+          }, 1000)
+        }
       })
     }
   },
@@ -128,6 +247,7 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
+  @import "../styles/common";
   .avatar-top {
     width: 30px;
     height: 30px;

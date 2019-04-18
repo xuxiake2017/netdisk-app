@@ -66,9 +66,56 @@ const router = new Router({
   routes
 });
 
-const whiteList = ['/login', '/404'] // 不重定向白名单
+function browser (to) {
+  const UA = navigator.userAgent;
+  const ipad = !!(UA.match(/(iPad).*OS\s([\d_]+)/)),
+    isIphone = !!(!ipad && UA.match(/(iPhone\sOS)\s([\d_]+)/)),
+    isAndroid = !!(UA.match(/(Android)\s+([\d.]+)/)),
+    isMobile = !!(isIphone || isAndroid)
+  const protocol = window.location.protocol
+  const hostname = window.location.hostname
+  const port = window.location.port
+  const path = to.path
+  const url = window.location.href
+  if (isMobile) {
+    if (url.indexOf('app') === -1) {
+      if (path.indexOf('/home/s') !== -1) {
+        if (port) {
+          location.href = `${protocol}//${hostname}:${port}/app/#${path}`
+        } else {
+          location.href = `${protocol}//${hostname}/app/#${path}`
+        }
+      } else {
+        if (port) {
+          location.href = `${protocol}//${hostname}:${port}/app`
+        } else {
+          location.href = `${protocol}//${hostname}/app`
+        }
+      }
+    }
+  } else {
+    if (url.indexOf('app') !== -1) {
+      if (path.indexOf('/home/s') !== -1) {
+        if (port) {
+          location.href = `${protocol}//${hostname}:${port}/#${path}`
+        } else {
+          location.href = `${protocol}//${hostname}/#${path}`
+        }
+      } else {
+        if (port) {
+          location.href = `${protocol}//${hostname}:${port}`
+        } else {
+          location.href = `${protocol}//${hostname}`
+        }
+      }
+    }
+  }
+}
+
+const whiteList = ['/login', '/404', '/home/s'] // 不重定向白名单
 
 router.beforeEach((to, from, next) => {
+  browser(to)
   NProgress.start();
   const token = getToken()
   if (token) {
@@ -89,11 +136,22 @@ router.beforeEach((to, from, next) => {
       }
     }
   } else {
-    if (whiteList.indexOf(to.path) !== -1) {
+    let flag = false
+    whiteList.forEach((item, index) => {
+      if (to.path.indexOf(item) !== -1) {
+        flag = true
+      }
+    })
+    if (flag) {
       next()
     } else {
       next({ path: '/login' })
     }
+    // if (whiteList.indexOf(to.path) !== -1) {
+    //   next()
+    // } else {
+    //   next({ path: '/login' })
+    // }
   }
 })
 

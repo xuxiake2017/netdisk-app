@@ -202,37 +202,7 @@ export default {
     },
     // 文件名过长截取
     formatFileName (row) {
-      let fileRealName = row.fileRealName
-      const fileNamelength = fileRealName.length
-      const reg = /[\u3400-\u4DB5\u4E00-\u9FA5\u9FA6-\u9FBB\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\uFF00-\uFFEF\u2E80-\u2EFF\u3000-\u303F\u31C0-\u31EF]/
-      let flag = 0
-      for (let i = 0; i < fileNamelength; i++) {
-        let char = fileRealName.charAt(i)
-        if (reg.test(char)) {
-          flag++
-        }
-      }
-      // 汉字占比
-      const percent = flag / fileNamelength
-      let isDir = row.isDir
-      if (percent >= 0.4) {
-        if (fileNamelength >= 20) {
-          if (isDir) {
-            fileRealName = `${fileRealName.substring(0, 10)}...${fileRealName.substring(fileNamelength - 10, fileNamelength)}`
-          } else {
-            fileRealName = `${fileRealName.substring(0, 15)}...${fileRealName.substring(fileNamelength - 5, fileNamelength)}`
-          }
-        }
-      } else {
-        if (fileNamelength >= 30) {
-          if (isDir) {
-            fileRealName = `${fileRealName.substring(0, 20)}...${fileRealName.substring(fileNamelength - 10, fileNamelength)}`
-          } else {
-            fileRealName = `${fileRealName.substring(0, 25)}...${fileRealName.substring(fileNamelength - 5, fileNamelength)}`
-          }
-        }
-      }
-      return fileRealName
+      return util.formatFileName(row.fileRealName, row.isDir)
     },
     // 格式化文件大小
     formatFileSize (row, column) {
@@ -561,24 +531,7 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-  .my-nav {
-    top: 46px;
-    left: 0;
-    width: 100%;
-    height: 35px;
-    position: fixed;
-    background-color: #FFFFFF;
-    z-index: 1;
-    text-align: center;
-    line-height: 1;
-    font-size: 14px;
-  }
-  .breadcrumb {
-    margin: 10px 10px;
-  }
-  .breadcrumb-item {
-    margin-left: 5px;
-  }
+  @import "../styles/common";
   .mkdir-suspend-btn {
     width: 30px;
     height: 30px;
