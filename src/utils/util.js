@@ -110,7 +110,7 @@ export default {
     }
     // 汉字占比
     const percent = flag / fileNamelength
-    if (percent >= 0.4) {
+    if (percent >= 0.35) {
       if (fileNamelength >= 20) {
         if (isDir) {
           fileRealName = `${fileRealName.substring(0, 10)}...${fileRealName.substring(fileNamelength - 10, fileNamelength)}`

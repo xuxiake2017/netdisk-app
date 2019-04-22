@@ -22,4 +22,9 @@ export default {
   left: 15px;
   top: 8px;
 }
+.van-button--info {
+  color: #fff;
+  background-color: #1989fa;
+  border: 1px solid #1989fa;
+}
 </style>

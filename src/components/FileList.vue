@@ -57,14 +57,20 @@
               </van-col>
             </van-row>
           </div>
-          <van-row>
-            上传时间：{{formatFileTime(item, index)}}
+          <van-row gutter="20">
+            <van-col>
+              上传时间：{{formatFileTime(item, index)}}
+            </van-col>
+            <van-col v-if="item.isDir">
+              文件大小：{{formatFileSize(item, index)}}
+            </van-col>
           </van-row>
           <van-row style="margin-top: 5px">
             <van-button size="mini" type="danger" @click="deleteHandler(item, index)">删除</van-button>
             <van-button v-if="item.isDir" size="mini" type="primary" @click="downloadHandler(item)">下载</van-button>
             <van-button size="mini" type="warning" @click="renameHandler(item)">重命名</van-button>
             <van-button size="mini" type="default" @click="mvFileHandler(item, index)">移动</van-button>
+            <van-button size="mini" type="info" @click="shareFileHandler(item, index)">分享</van-button>
           </van-row>
         </van-collapse-item>
       </van-collapse>
@@ -119,6 +125,20 @@
         </el-tree>
       </div>
     </van-dialog>
+    <!--分享文件对话框-->
+    <van-dialog
+      v-model="show"
+      :show-confirm-button="false">
+      <div class="van-dialog__header">
+        <span>分享成功</span>
+      </div>
+      <van-row class="van-dialog__message van-dialog__message--has-title" style="text-align: left">
+        {{message}}
+      </van-row>
+      <button class="van-button van-button--default van-button--large van-dialog__confirm" id="clipBoardBtn" :data-clipboard-text="clipboardText" @click="cipboard">
+        <span class="van-button__text">确认</span>
+      </button>
+    </van-dialog>
     <!--固定定位的新建文件夹按钮-->
     <div class="mkdir-suspend-btn" @click="mkdirHandler">
       <van-icon name="my-mkdir" :size="'25px'"/>
@@ -128,10 +148,12 @@
 
 <script>
 import { GetFileList, UploadMD5, ListAllDir, MkDir, MoveFile, DeleteFile, ReName } from '@/api/file'
+import { ShareFile } from '@/api/share'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
 import usermixin from '@/mixins/userInfo'
 import { mapGetters } from 'vuex'
+import ClipBoard from 'clipboard'
 export default {
   name: 'FileList',
   mixins: [usermixin],
@@ -180,7 +202,10 @@ export default {
       hackReset: false,
       dirs: [],
       movedFileSaveName: '',
-      movedId: 0
+      movedId: 0,
+      // 文件分享
+      message: '',
+      clipboardText: ''
     }
   },
   computed: {
@@ -220,6 +245,8 @@ export default {
         this.fileList.push(...res.data.pageInfo.list)
         this.closeAllCollapse()
         // this.pagination.pageNum++
+      }).catch(res => {
+        this.loading = false
       })
     },
     onLoad () {
@@ -396,6 +423,13 @@ export default {
           } else {
             done()
           }
+          break;
+        case 'sharefile':
+          if (action === 'confirm') {
+            this.cipboard(done)
+          } else {
+            done()
+          }
       }
     },
     // 文件上传
@@ -503,6 +537,25 @@ export default {
       this.$nextTick(() => {
         this.hackReset = true;// 重建组件
       });
+    },
+    // 文件分享
+    shareFileHandler (row, index) {
+      ShareFile({ fileSaveName: row.fileSaveName }).then(res => {
+        this.show = true
+        this.clipboardText = `链接：${res.data.serverHost}/#/home/s/${res.data.shareFile.shareId} 密码：${res.data.shareFile.sharePwd}`
+        this.message = `文件分享成功，点击"确定"复制链接及密码（${this.clipboardText}）`
+      })
+    },
+    // 复制到剪贴板
+    cipboard (done) {
+      let clipboard_ = new ClipBoard('#clipBoardBtn')
+      clipboard_.on('success', () => {
+        this.$toast('复制成功！')
+        this.show = false
+      })
+      clipboard_.on('error', () => {
+        this.$toast('复制失败，请手动选择复制！')
+      })
     },
     // 移动文件
     mvFile (done) {
