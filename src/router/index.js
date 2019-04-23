@@ -38,7 +38,7 @@ const routes = [
     hidden: true
   },
   {
-    path: '/verify',
+    path: '/home/verify',
     component: Verify,
     name: 'Verify',
     hidden: true
@@ -109,15 +109,15 @@ function browser (to) {
   const protocol = window.location.protocol
   const hostname = window.location.hostname
   const port = window.location.port
-  const path = to.path
+  const fullPath = to.fullPath
   const url = window.location.href
   if (isMobile) {
     if (url.indexOf('app') === -1) {
-      if (path.indexOf('/home/s') !== -1) {
+      if (fullPath.indexOf('/home/s') !== -1 || fullPath.indexOf('/home/verify') !== -1) {
         if (port) {
-          location.href = `${protocol}//${hostname}:${port}/app/#${path}`
+          location.href = `${protocol}//${hostname}:${port}/app/#${fullPath}`
         } else {
-          location.href = `${protocol}//${hostname}/app/#${path}`
+          location.href = `${protocol}//${hostname}/app/#${fullPath}`
         }
       } else {
         if (port) {
@@ -130,11 +130,11 @@ function browser (to) {
     }
   } else {
     if (url.indexOf('app') !== -1) {
-      if (path.indexOf('/home/s') !== -1) {
+      if (fullPath.indexOf('/home/s') !== -1 || fullPath.indexOf('/home/verify') !== -1) {
         if (port) {
-          location.href = `${protocol}//${hostname}:${port}/#${path}`
+          location.href = `${protocol}//${hostname}:${port}/#${fullPath}`
         } else {
-          location.href = `${protocol}//${hostname}/#${path}`
+          location.href = `${protocol}//${hostname}/#${fullPath}`
         }
       } else {
         if (port) {
@@ -149,12 +149,12 @@ function browser (to) {
   return true
 }
 
-const whiteList = ['/login', '/register', '/404', '/home/s'] // 不重定向白名单
+const whiteList = ['/login', '/register', '/404', '/home/s', '/home/verify'] // 不重定向白名单
 
 router.beforeEach((to, from, next) => {
-  // if (!browser(to)) {
-  //   return
-  // }
+  if (!browser(to)) {
+    return
+  }
   NProgress.start();
   const token = getToken()
   if (token) {
