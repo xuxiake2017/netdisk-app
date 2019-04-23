@@ -20,12 +20,13 @@
             <span class="custom-text">注销</span>
           </template>
         </van-cell>
+        <van-progress :percentage="percentage" style="margin: 20px 15px"/>
       </van-row>
     </van-popup>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
-      <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
-      <van-button v-if="$route.name === 'gallery'" type="primary" slot="right" size="mini">返回</van-button>
       <img :src="user.avatar" class="avatar-top" slot="left"/>
+      <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
+      <van-icon v-else name="home-o" slot="right" :size="'20px'"/>
     </van-nav-bar>
     <router-view></router-view>
   </div>
@@ -34,6 +35,9 @@
 <script>
 import { Logout } from '@/api/user'
 import { mapGetters } from 'vuex'
+import { Notify } from 'vant'
+import Vue from 'vue'
+Vue.use(Notify);
 export default {
   name: 'Home',
   data () {
@@ -65,6 +69,14 @@ export default {
       set (val) {
         this.$store.commit('toggleUploadPopup', val)
       }
+    },
+    percentage: {
+      get () {
+        const totalMemory = this.user.totalMemory
+        const usedMemory = this.user.usedMemory
+        const percentage = usedMemory / totalMemory
+        return (percentage * 100).toFixed(1)
+      }
     }
   },
   methods: {
@@ -91,10 +103,12 @@ export default {
     },
     // 导航栏右边点击处理器
     clickRightHandler () {
-      if (this.$route.name === 'fileList') {
-        this.uploadPopupShow = true
-      } else if (this.$route.name === 'gallery') {
-        this.$router.go(-1)
+      switch (this.$route.name) {
+        case 'fileList':
+          this.uploadPopupShow = true
+          break
+        default:
+          this.$router.push({ path: '/fileList' })
       }
     }
   },
@@ -106,6 +120,13 @@ export default {
         })
       }
     })
+    if (this.user.messages && this.user.messages.length > 0) {
+      Notify({
+        message: '您有新的消息，请到"我的消息"中查看',
+        duration: 3000,
+        background: '#1989fa'
+      });
+    }
   }
 }
 </script>

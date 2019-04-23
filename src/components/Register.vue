@@ -6,23 +6,23 @@
     <van-row class="login-field">
       <van-row type="flex" justify="center" style="margin-bottom: 10px">
         <van-col >
-          <span class="login-title">系统登录</span>
+          <span class="login-title">系统注册</span>
         </van-col>
       </van-row>
       <van-field
         class="login-input"
         left-icon="my-user"
-        v-model="loginData.loginInfo"
+        v-model="regData.email"
         center
         clearable
-        placeholder="请输入用户名"
+        placeholder="请输入邮箱"
       ></van-field>
       <van-field
         class="login-input"
         left-icon="my-cloud-lock"
         :right-icon="icon"
         :type="type"
-        v-model="loginData.password"
+        v-model="regData.password"
         center
         clearable
         placeholder="请输入密码"
@@ -31,7 +31,7 @@
       <div style="position: relative">
         <van-field
           class="login-input"
-          v-model="loginData.imgCode"
+          v-model="regData.imgCode"
           left-icon="my-captcha"
           center
           clearable
@@ -42,21 +42,21 @@
         </div>
       </div>
       <van-row style="text-align: left; margin-left: 15px; margin-right: 15px;">
-        <el-button type="text" @click="toReg">没有账号？立即注册</el-button>
+        <el-button type="text" @click="toLogin">已有账号？立即登录</el-button>
       </van-row>
-      <van-button type="primary" style="width: 60%" @click="loginHandler" :loading="loading">登录</van-button>
+      <van-button type="primary" style="width: 60%" @click="regHandler" :loading="loading">注册</van-button>
     </van-row>
   </div>
 </template>
 
 <script>
-import { RequestLogin } from '@/api/user'
+import { RegisterApp } from '@/api/user'
 import { setToken } from '@/utils/auth'
 export default {
   data () {
     return {
-      loginData: {
-        loginInfo: '',
+      regData: {
+        email: '',
         password: '',
         imgCode: ''
       },
@@ -80,23 +80,28 @@ export default {
     changeCaptcha () {
       this.captchaSrc = `${process.env.BASE_API}/user/createImg?${new Date().getTime()}`
     },
-    loginHandler () {
-      if (!this.loginData.loginInfo || !this.loginData.password || !this.loginData.imgCode) {
-        this.$toast.fail('请完善登陆信息')
+    regHandler () {
+      if (!this.regData.email || !this.regData.password || !this.regData.imgCode) {
+        this.$toast.fail('请完善注册信息')
       } else {
         this.loading = true
-        RequestLogin({ ...this.loginData }).then(res => {
+        RegisterApp({ ...this.regData }).then(res => {
           this.loading = false
-          this.$store.commit('storeUser', res.data)
-          setToken(res.data.token)
-          this.$router.push({ path: '/fileList' })
+          this.$dialog.confirm({
+            title: '提示',
+            message: '注册成功，是否立即登录？'
+          }).then(() => {
+            this.$router.push({ path: '/login' })
+          }).catch(() => {
+            // on cancel
+          })
         }).catch(res => {
           this.loading = false
         })
       }
     },
-    toReg () {
-      this.$router.push({ path: '/register' });
+    toLogin () {
+      this.$router.push({ path: '/login' });
     }
   },
   created () {

@@ -1,11 +1,15 @@
 import Vue from 'vue'
 import Router from 'vue-router'
 import Login from '@/components/Login'
+import Register from '@/components/Register'
 import FileList from '@/components/FileList'
 import Gallery from '@/components/Gallery'
 import Home from '@/components/Home'
 import AccessShareFile from '@/components/AccessShareFile'
 import NotFound from '@/components/404'
+import Verify from '@/components/Verify'
+import Message from '@/components/Message'
+import UserInfo from '@/components/UserInfo'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
@@ -22,9 +26,21 @@ const routes = [
     component: Login
   },
   {
+    path: '/register',
+    name: 'Register',
+    hidden: true,
+    component: Register
+  },
+  {
     path: '/404',
     component: NotFound,
     name: 'NotFound',
+    hidden: true
+  },
+  {
+    path: '/verify',
+    component: Verify,
+    name: 'Verify',
     hidden: true
   },
   {
@@ -55,6 +71,24 @@ const routes = [
           icon: 'my-gallery'
         },
         component: Gallery
+      },
+      {
+        path: 'message',
+        name: 'message',
+        meta: {
+          title: '我的消息',
+          icon: 'envelop-o'
+        },
+        component: Message
+      },
+      {
+        path: 'userInfo',
+        name: 'userInfo',
+        meta: {
+          title: '用户信息',
+          icon: 'user-o'
+        },
+        component: UserInfo
       }
     ]
   }
@@ -92,6 +126,7 @@ function browser (to) {
           location.href = `${protocol}//${hostname}/app`
         }
       }
+      return false
     }
   } else {
     if (url.indexOf('app') !== -1) {
@@ -108,14 +143,18 @@ function browser (to) {
           location.href = `${protocol}//${hostname}`
         }
       }
+      return false
     }
   }
+  return true
 }
 
-const whiteList = ['/login', '/404', '/home/s'] // 不重定向白名单
+const whiteList = ['/login', '/register', '/404', '/home/s'] // 不重定向白名单
 
 router.beforeEach((to, from, next) => {
-  browser(to)
+  // if (!browser(to)) {
+  //   return
+  // }
   NProgress.start();
   const token = getToken()
   if (token) {

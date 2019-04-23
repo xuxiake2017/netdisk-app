@@ -33,8 +33,13 @@
               </van-col>
             </van-row>
           </div>
-          <van-row>
-            上传时间：{{formatFileTime(item, index)}}
+          <van-row gutter="20">
+            <van-col>
+              上传时间：{{formatFileTime(item, index)}}
+            </van-col>
+            <van-col v-if="item.isDir">
+              文件大小：{{formatFileSize(item, index)}}
+            </van-col>
           </van-row>
           <van-row style="margin-top: 5px">
             <van-button v-if="item.isDir" size="mini" type="primary" @click="handleDownload(index, item)">下载</van-button>
@@ -63,6 +68,7 @@ import { mapGetters } from 'vuex'
 import util from '../utils/util'
 import Cookies from 'js-cookie'
 import { GetShareFile, CheckPwd, GetSubList, SaveToCloud } from '../api/share'
+import { ImagePreview } from 'vant'
 export default {
   name: 'AccessShareFile',
   data () {
@@ -191,12 +197,23 @@ export default {
       } else if (className.indexOf('van-button') !== -1) {
       } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
-        if (item.isDir === 0) {
-          this.getSublistClick(item)
+        switch (item.fileType) {
+          case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
+            this.getSublistClick(item)
+            break
+          case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
+            this.imagePreview(item)
+            break
         }
       } else {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
+    },
+    // 图片预览
+    imagePreview (item) {
+      ImagePreview([
+        item.mediaCachePath
+      ])
     },
     // 文件路径跳转
     jump (item, index) {

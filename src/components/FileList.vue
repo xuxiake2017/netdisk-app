@@ -127,7 +127,7 @@
     </van-dialog>
     <!--分享文件对话框-->
     <van-dialog
-      v-model="show"
+      v-model="shareFileDialogShow"
       :show-confirm-button="false">
       <div class="van-dialog__header">
         <span>分享成功</span>
@@ -154,6 +154,7 @@ import util from '@/utils/util'
 import usermixin from '@/mixins/userInfo'
 import { mapGetters } from 'vuex'
 import ClipBoard from 'clipboard'
+import { ImagePreview } from 'vant'
 export default {
   name: 'FileList',
   mixins: [usermixin],
@@ -205,7 +206,8 @@ export default {
       movedId: 0,
       // 文件分享
       message: '',
-      clipboardText: ''
+      clipboardText: '',
+      shareFileDialogShow: false
     }
   },
   computed: {
@@ -305,12 +307,23 @@ export default {
       } else if (className.indexOf('van-button') !== -1) {
       } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
-        if (item.isDir === 0) {
-          this.getSubFileList(item)
+        switch (item.fileType) {
+          case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
+            this.getSubFileList(item)
+            break
+          case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
+            this.imagePreview(item)
+            break
         }
       } else {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
+    },
+    // 图片预览
+    imagePreview (item) {
+      ImagePreview([
+        item.mediaCachePath
+      ])
     },
     // 文件删除
     deleteHandler (item, index) {
@@ -541,7 +554,7 @@ export default {
     // 文件分享
     shareFileHandler (row, index) {
       ShareFile({ fileSaveName: row.fileSaveName }).then(res => {
-        this.show = true
+        this.shareFileDialogShow = true
         this.clipboardText = `链接：${res.data.serverHost}/#/home/s/${res.data.shareFile.shareId} 密码：${res.data.shareFile.sharePwd}`
         this.message = `文件分享成功，点击"确定"复制链接及密码（${this.clipboardText}）`
       })
@@ -551,7 +564,7 @@ export default {
       let clipboard_ = new ClipBoard('#clipBoardBtn')
       clipboard_.on('success', () => {
         this.$toast('复制成功！')
-        this.show = false
+        this.shareFileDialogShow = false
       })
       clipboard_.on('error', () => {
         this.$toast('复制失败，请手动选择复制！')

@@ -47,3 +47,7 @@ export const VerifyEmail = params => {
 export const Register = params => {
   return post('user/register', params).then(res => res.data)
 }
+
+export const RegisterApp = params => {
+  return post('user/registerApp', params).then(res => res.data)
+}

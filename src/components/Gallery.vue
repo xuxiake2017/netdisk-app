@@ -89,6 +89,7 @@ export default {
         this.loading = false
       }).catch((res) => {
         console.log('获取图片列表失败')
+        this.loading = false
       })
     },
     onLoad () {
