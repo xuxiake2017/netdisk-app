@@ -7,9 +7,12 @@
             <img :src="user.avatar"/>
           </van-col>
           <van-col offset="2" class="username">
-            {{user.name}}
+            {{usernameSub(user.name)}}
           </van-col>
         </van-row>
+        <van-notice-bar mode="closeable">
+          更多功能，请用电脑访问
+        </van-notice-bar>
         <van-cell :icon="item.meta.icon" is-link v-for="(item, index) in routes" :key="index" @click="jump(item.path)">
           <template slot="title">
             <span class="custom-text">{{item.meta.title}}</span>
@@ -26,7 +29,7 @@
         <!--<el-progress :text-inside="true" :stroke-width="18" :percentage="percentage" style="margin: 20px 15px">{{memoryInfo}}</el-progress>-->
       </van-row>
     </van-popup>
-    <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
+    <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
       <img :src="user.avatar" class="avatar-top" slot="left"/>
       <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
       <van-icon v-else name="home-o" slot="right" :size="'20px'"/>
@@ -132,6 +135,13 @@ export default {
     toHome () {
       this.popupShow = false
       this.$router.push({ path: '/userInfo' })
+    },
+    // 用户名截取显示
+    usernameSub (name) {
+      if (name.length > 8) {
+        return `${name.substring(0, 8)}...`
+      }
+      return name
     }
   },
   mounted () {

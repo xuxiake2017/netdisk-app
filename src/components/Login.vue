@@ -1,7 +1,7 @@
 <template>
   <div class="login-outter" :style="{'height': `${clientHeight}px`}">
     <div>
-      <img src="../assets/avatar.jpg" class="login-avatar"/>
+      <img src="../assets/login_avatar.jpg" class="login-avatar"/>
     </div>
     <van-row class="login-field">
       <van-row type="flex" justify="center" style="margin-bottom: 10px">
@@ -36,6 +36,7 @@
           center
           clearable
           placeholder="请输入验证码"
+          maxlength="4"
         ></van-field>
         <div class="login-captcha">
           <img :src="captchaSrc" @click="changeCaptcha"/>

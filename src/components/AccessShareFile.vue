@@ -1,6 +1,6 @@
 <template>
   <div>
-    <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
+    <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
       <van-icon name="home-o" slot="right" :size="'20px'"/>
       <img :src="shareFile.avatar" class="avatar-top" slot="left"/>
     </van-nav-bar>
@@ -60,6 +60,11 @@
         placeholder="请输入提取密码"
       />
     </van-dialog>
+    <media-preview
+      :show="mediaPopupShow"
+      :mediaFile="mediaFile"
+      @media-popup-close="mediaPopupClose">
+    </media-preview>
   </div>
 </template>
 
@@ -68,9 +73,10 @@ import { mapGetters } from 'vuex'
 import util from '../utils/util'
 import Cookies from 'js-cookie'
 import { GetShareFile, CheckPwd, GetSubList, SaveToCloud } from '../api/share'
-import { ImagePreview } from 'vant'
+import mediaPreview from '@/mixins/mediaPreview'
 export default {
   name: 'AccessShareFile',
+  mixins: [mediaPreview],
   data () {
     return {
       fileIoc: '',
@@ -204,16 +210,16 @@ export default {
           case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
             this.imagePreview(item)
             break
+          case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
+            this.mediaPreview(item)
+            break
+          case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
+            this.mediaPreview(item)
+            break
         }
       } else {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
-    },
-    // 图片预览
-    imagePreview (item) {
-      ImagePreview([
-        item.mediaCachePath
-      ])
     },
     // 文件路径跳转
     jump (item, index) {

@@ -139,6 +139,11 @@
         <span class="van-button__text">确认</span>
       </button>
     </van-dialog>
+    <media-preview
+      :show="mediaPopupShow"
+      :mediaFile="mediaFile"
+      @media-popup-close="mediaPopupClose">
+    </media-preview>
     <!--固定定位的新建文件夹按钮-->
     <div class="mkdir-suspend-btn" @click="mkdirHandler">
       <van-icon name="my-mkdir" :size="'25px'"/>
@@ -152,12 +157,12 @@ import { ShareFile } from '@/api/share'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
 import usermixin from '@/mixins/userInfo'
+import mediaPreview from '@/mixins/mediaPreview'
 import { mapGetters } from 'vuex'
 import ClipBoard from 'clipboard'
-import { ImagePreview } from 'vant'
 export default {
   name: 'FileList',
-  mixins: [usermixin],
+  mixins: [usermixin, mediaPreview],
   data () {
     return {
       // 储存文件树路径
@@ -314,16 +319,16 @@ export default {
           case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
             this.imagePreview(item)
             break
+          case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
+            this.mediaPreview(item)
+            break
+          case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
+            this.mediaPreview(item)
+            break
         }
       } else {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
       }
-    },
-    // 图片预览
-    imagePreview (item) {
-      ImagePreview([
-        item.mediaCachePath
-      ])
     },
     // 文件删除
     deleteHandler (item, index) {

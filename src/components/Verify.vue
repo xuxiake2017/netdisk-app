@@ -1,8 +1,8 @@
 <template>
   <div>
     <van-nav-bar title="邮件验证" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
+      <van-icon name="user-o" slot="left" :size="'20px'"/>
       <van-icon name="home-o" slot="right" :size="'20px'"/>
-      <img src="../assets/user.png" class="avatar-top" slot="left"/>
     </van-nav-bar>
   </div>
 </template>
@@ -29,7 +29,12 @@ export default {
       const key = this.$route.query.key
       if (key) {
         VerifyEmail({ key }).then(res => {
-          this.setInterval()
+          if (res.data === 20102) {
+            // 已验证
+            this.$router.push({ path: '/fileList' })
+          } else {
+            this.setInterval()
+          }
         })
       }
     },
@@ -61,10 +66,4 @@ export default {
 </script>
 
 <style scoped>
-  .avatar-top {
-    width: 20px;
-    height: 20px;
-    border-radius: 10px;
-    /*box-shadow:1px 1px 3px #333333;*/
-  }
 </style>

@@ -1,7 +1,7 @@
 <template>
   <div class="login-outter" :style="{'height': `${clientHeight}px`}">
     <div>
-      <img src="../assets/avatar.jpg" class="login-avatar"/>
+      <img src="../assets/reg_avatar.png" class="login-avatar"/>
     </div>
     <van-row class="login-field">
       <van-row type="flex" justify="center" style="margin-bottom: 10px">
@@ -16,6 +16,8 @@
         center
         clearable
         placeholder="请输入邮箱"
+        :error-message="errorMessage.email"
+        @blur="validateEmail"
       ></van-field>
       <van-field
         class="login-input"
@@ -27,6 +29,8 @@
         clearable
         placeholder="请输入密码"
         @click-right-icon="clickRightIconHandler"
+        :error-message="errorMessage.password"
+        @blur="validatePassword"
       ></van-field>
       <div style="position: relative">
         <van-field
@@ -36,6 +40,9 @@
           center
           clearable
           placeholder="请输入验证码"
+          :error-message="errorMessage.imgCode"
+          maxlength="4"
+          @blur="validateCaptcha"
         ></van-field>
         <div class="login-captcha">
           <img :src="captchaSrc" @click="changeCaptcha"/>
@@ -51,7 +58,7 @@
 
 <script>
 import { RegisterApp } from '@/api/user'
-import { setToken } from '@/utils/auth'
+import { checkEmail, validateCaptcha, validatePassword } from '../utils/validate'
 export default {
   data () {
     return {
@@ -64,7 +71,12 @@ export default {
       loading: false,
       icon: 'my-close-eye',
       type: 'password',
-      clientHeight: ''
+      clientHeight: '',
+      errorMessage: {
+        email: '',
+        password: '',
+        imgCode: ''
+      }
     }
   },
   methods: {
@@ -80,10 +92,27 @@ export default {
     changeCaptcha () {
       this.captchaSrc = `${process.env.BASE_API}/user/createImg?${new Date().getTime()}`
     },
+    validateEmail () {
+      this.errorMessage.email = checkEmail(this.regData.email).message
+    },
+    validatePassword () {
+      this.errorMessage.password = validatePassword(this.regData.password).message
+    },
+    validateCaptcha () {
+      this.errorMessage.imgCode = validateCaptcha(this.regData.imgCode).message
+    },
     regHandler () {
       if (!this.regData.email || !this.regData.password || !this.regData.imgCode) {
         this.$toast.fail('请完善注册信息')
       } else {
+        this.validateEmail()
+        this.validatePassword()
+        this.validateCaptcha()
+        for (let key in this.errorMessage) {
+          if (this.errorMessage[key]) {
+            return
+          }
+        }
         this.loading = true
         RegisterApp({ ...this.regData }).then(res => {
           this.loading = false
@@ -121,7 +150,7 @@ export default {
     position: relative;
     margin: 0 0;
     background-size: auto;
-    background: url("../assets/login_bg.jpg") no-repeat center;
+    background: url("../assets/reg_bg.jpg") no-repeat center;
   }
   .login-avatar {
     width: 80px;
