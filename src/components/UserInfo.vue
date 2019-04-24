@@ -176,7 +176,7 @@ export default {
 
 <style scoped>
  .user-info {
-   margin-top: 60px;
+   margin-top: 46px;
  }
  .avatar-uploader {
    border: 1px dashed #d9d9d9;

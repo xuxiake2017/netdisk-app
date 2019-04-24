@@ -2,7 +2,7 @@
   <div class="float-left">
     <van-popup v-model="popupShow" position="left" class="my-popup">
       <van-row class="user-info">
-        <van-row class="avatar-popup">
+        <van-row class="avatar-popup" @click.native="toHome">
           <van-col>
             <img :src="user.avatar"/>
           </van-col>
@@ -13,6 +13,7 @@
         <van-cell :icon="item.meta.icon" is-link v-for="(item, index) in routes" :key="index" @click="jump(item.path)">
           <template slot="title">
             <span class="custom-text">{{item.meta.title}}</span>
+            <van-tag type="danger" round v-if="item.name === 'message' && user.messages.length > 0">{{user.messages.length}}</van-tag>
           </template>
         </van-cell>
         <van-cell icon="my-logout" is-link @click="logout">
@@ -20,7 +21,9 @@
             <span class="custom-text">注销</span>
           </template>
         </van-cell>
-        <van-progress :percentage="percentage" style="margin: 20px 15px"/>
+        <!--<van-progress :percentage="percentage" style="margin: 20px 15px"/>-->
+        <van-tag style="margin: 25px 0px; width: 100%">{{memoryInfo}}</van-tag>
+        <!--<el-progress :text-inside="true" :stroke-width="18" :percentage="percentage" style="margin: 20px 15px">{{memoryInfo}}</el-progress>-->
       </van-row>
     </van-popup>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler">
@@ -77,6 +80,11 @@ export default {
         const percentage = usedMemory / totalMemory
         return (percentage * 100).toFixed(1)
       }
+    },
+    memoryInfo: {
+      get () {
+        return `${this.formatFileSize(parseInt(this.user.usedMemory))} / ${this.formatFileSize(parseInt(this.user.totalMemory))}`
+      }
     }
   },
   methods: {
@@ -110,6 +118,20 @@ export default {
         default:
           this.$router.push({ path: '/fileList' })
       }
+    },
+    formatFileSize: function (fileSize) {
+      if (fileSize) {
+        if (fileSize > 1024 * 1024) {
+          fileSize = fileSize / (1024 * 1024);
+          return fileSize.toFixed(2) + 'M';
+        }
+      } else {
+        return '0M';
+      }
+    },
+    toHome () {
+      this.popupShow = false
+      this.$router.push({ path: '/userInfo' })
     }
   },
   mounted () {
