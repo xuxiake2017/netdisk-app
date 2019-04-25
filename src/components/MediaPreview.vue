@@ -86,6 +86,9 @@ export default {
         this.musicOptions.title = ''
         this.musicOptions.src = ''
       } else {
+        if (!this.mediaFile.mediaCachePath) {
+          this.$toast('正在转码中，请稍后再试')
+        }
         this.title = this.mediaFile.fileRealName
         if (this.mediaFile.fileType === this.$NetdiskConstant.FILE_TYPE_OF_VIDEO) {
           this.playerOptions.sources.splice(0)
