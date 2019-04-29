@@ -24,8 +24,8 @@
             <span class="custom-text">注销</span>
           </template>
         </van-cell>
-        <!--<van-progress :percentage="percentage" style="margin: 20px 15px"/>-->
-        <van-tag style="margin: 25px 0px; width: 100%">{{memoryInfo}}</van-tag>
+        <van-progress :percentage="percentage" style="margin: 20px 15px"/>
+        <!--<van-tag style="margin: 25px 15px; width: 150px">{{memoryInfo}}</van-tag>-->
         <!--<el-progress :text-inside="true" :stroke-width="18" :percentage="percentage" style="margin: 20px 15px">{{memoryInfo}}</el-progress>-->
       </van-row>
     </van-popup>

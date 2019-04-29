@@ -10,6 +10,7 @@ import NotFound from '@/components/404'
 import Verify from '@/components/Verify'
 import Message from '@/components/Message'
 import UserInfo from '@/components/UserInfo'
+import Chat from '@/components/Chat'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
@@ -80,6 +81,15 @@ const routes = [
           icon: 'envelop-o'
         },
         component: Message
+      },
+      {
+        path: 'chat',
+        name: 'chat',
+        meta: {
+          title: '好友消息',
+          icon: 'friends-o'
+        },
+        component: Chat
       },
       {
         path: 'userInfo',
