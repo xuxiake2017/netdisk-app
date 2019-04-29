@@ -6,7 +6,24 @@
 
 <script>
 export default {
-  name: 'App'
+  name: 'App',
+  created () {
+    this.clientHeight = `${document.documentElement.clientHeight}`
+    window.addEventListener('resize', () => {
+      this.clientHeight = `${document.documentElement.clientHeight}`
+      console.log(this.clientHeight)
+    })
+  },
+  computed: {
+    clientHeight: {
+      get () {
+        return this.$store.getters.clientHeight
+      },
+      set (val) {
+        this.$store.commit('setClientHeight', val)
+      }
+    }
+  }
 }
 </script>
 
