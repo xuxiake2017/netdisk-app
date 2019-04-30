@@ -4,6 +4,7 @@ import FileList from './modules/fileList'
 import User from './modules/user'
 import Home from './modules/home'
 import App from './modules/app'
+import Websocket from './modules/websocket'
 
 Vue.use(Vuex)
 
@@ -12,6 +13,7 @@ export default new Vuex.Store({
     User,
     Home,
     FileList,
-    App
+    App,
+    Websocket
   }
 })

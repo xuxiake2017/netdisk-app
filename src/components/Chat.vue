@@ -29,7 +29,7 @@
         left-arrow
         @click-left="chatPopupClose">
       </van-nav-bar>
-      <div class="layim-chat-main" :style="{'height': `${clientHeight - 115}px`}">
+      <div class="layim-chat-main" :style="{'height': `${clientHeight - 130}px`}" ref="chatMain">
         <ul>
           <li v-for="(item, index) in messages" :key="index" :class="{ 'layim-chat-mine': item.mine }">
             <div class="layim-chat-user">
@@ -45,7 +45,7 @@
           </li>
         </ul>
       </div>
-      <div class="layim-chat-footer">
+      <div class="layim-chat-footer" ref="chatFooter">
         <!--<div class="layim-chat-textarea"><textarea></textarea></div>-->
         <div style="position: relative">
           <el-input
@@ -54,7 +54,7 @@
             autosize
             placeholder="请输入内容">
           </el-input>
-          <el-button type="text" class="message-send-button" solt="suffix" @click="sendMessage">发送</el-button>
+          <el-button type="text" class="message-send-button" @click="sendMessage">发送</el-button>
         </div>
         <div class="layui-unselect layim-chat-tool">
           <span class="layui-icon layim-tool-face" title="选择表情" layim-event="face"></span>
@@ -72,7 +72,8 @@
 </template>
 
 <script>
-import { Test } from '../api/tuling'
+import { SendMessage } from '../api/tuling'
+import util from '@/utils/util'
 export default {
   name: 'Chat',
   data () {
@@ -94,27 +95,50 @@ export default {
           user: '小闲',
           msg: '嘻嘻嘻',
           mine: false
-        }
-      ],
-      tuling: {
-        reqType: 0,
-        perception: {
-          inputText: {
-            text: '附近的酒店'
-          },
-          selfInfo: {
-            location: {
-              city: '北京',
-              province: '北京',
-              street: '信息路'
-            }
-          }
         },
-        userInfo: {
-          apiKey: '9da9da380449424c9231b7a3c349584a',
-          userId: ' 5c6ff697163191fa'
+        {
+          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
+          date: '2019-04-29 20:17:41',
+          user: '纸飞机',
+          msg: '哈哈哈',
+          mine: true
+        },
+        {
+          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
+          date: '2019-04-29 20:17:42',
+          user: '小闲',
+          msg: '嘻嘻嘻',
+          mine: false
+        },
+        {
+          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
+          date: '2019-04-29 20:17:41',
+          user: '纸飞机',
+          msg: '哈哈哈',
+          mine: true
+        },
+        {
+          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
+          date: '2019-04-29 20:17:42',
+          user: '小闲',
+          msg: '嘻嘻嘻',
+          mine: false
+        },
+        {
+          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
+          date: '2019-04-29 20:17:41',
+          user: '纸飞机',
+          msg: '哈哈哈',
+          mine: true
+        },
+        {
+          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
+          date: '2019-04-29 20:17:42',
+          user: '小闲',
+          msg: '嘻嘻嘻',
+          mine: false
         }
-      }
+      ]
     }
   },
   methods: {
@@ -125,12 +149,29 @@ export default {
       this.show = true
     },
     sendMessage () {
-      this.tuling.perception.inputText.text = this.messageCurrent
-      Test({ ...this.tuling }).then(res => {
-        console.log(res)
-      }).catch(res => {
-        console.log(res)
-      })
+      if (!this.messageCurrent) {
+        return
+      }
+      this.$socket.send(this.messageCurrent)
+      // let send = {}
+      // send.img = '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg'
+      // send.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+      // send.user = '纸飞机'
+      // send.msg = this.messageCurrent
+      // send.mine = true
+      // this.messages.push(send)
+      // const message = this.messageCurrent
+      // this.messageCurrent = ''
+      // SendMessage({ message }).then(res => {
+      //   let receive = {}
+      //   receive.img = '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg'
+      //   receive.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+      //   receive.user = '小闲'
+      //   receive.msg = res.data.results[0].values.text
+      //   receive.mine = false
+      //   this.messages.push(receive)
+      // }).catch(res => {
+      // })
     }
   },
   computed: {
@@ -139,6 +180,15 @@ export default {
         return this.$store.getters.clientHeight
       }
     }
+  },
+  updated () {
+    this.$nextTick(() => {
+      const chatMain = this.$refs.chatMain
+      const scrollHeight = chatMain.scrollHeight
+      if (scrollHeight > 0) {
+        chatMain.scrollTop = scrollHeight
+      }
+    })
   }
 }
 </script>

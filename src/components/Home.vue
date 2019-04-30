@@ -81,7 +81,7 @@ export default {
         const totalMemory = this.user.totalMemory
         const usedMemory = this.user.usedMemory
         const percentage = usedMemory / totalMemory
-        return (percentage * 100).toFixed(1)
+        return parseFloat((percentage * 100).toFixed(1))
       }
     },
     memoryInfo: {

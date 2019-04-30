@@ -1,5 +1,5 @@
 import { post } from '../utils/request'
 
-export const Test = params => {
-  return post('http://openapi.tuling123.com/openapi/api/v2', params, {stringify: false}).then(res => res.data)
+export const SendMessage = params => {
+  return post('tuling/sendMessage', params, {stringify: true}).then(res => res.data)
 }

@@ -90,6 +90,8 @@ export default {
           this.$store.commit('storeUser', res.data)
           setToken(res.data.token)
           this.$router.push({ path: '/fileList' })
+          // 打开websocket连接
+          this.$connect()
         }).catch(res => {
           this.loading = false
         })

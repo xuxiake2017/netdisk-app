@@ -11,7 +11,6 @@ export default {
     this.clientHeight = `${document.documentElement.clientHeight}`
     window.addEventListener('resize', () => {
       this.clientHeight = `${document.documentElement.clientHeight}`
-      console.log(this.clientHeight)
     })
   },
   computed: {
