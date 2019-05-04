@@ -45,7 +45,8 @@ export default {
     }
   },
   getters: {
-    'isConnected': state => state.isConnected,
-    'message': state => state.message
+    'isConnected': state => state.socket.isConnected,
+    'message': state => state.socket.message,
+    'socket': state => state.socket
   }
 }

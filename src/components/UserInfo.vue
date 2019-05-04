@@ -67,6 +67,10 @@
           <van-radio name="2">女</van-radio>
         </van-radio-group>
       </van-cell>
+      <van-field
+        v-model="form.signature"
+        label="个性签名"
+      />
       <van-cell title="" class="van-cell-save-button">
         <van-button size="small" type="info" @click="onSubmit">保存</van-button>
       </van-cell>
@@ -94,7 +98,8 @@ export default {
         phone: '',
         email: '',
         avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
-        userStatus: ''
+        userStatus: '',
+        signature: ''
       },
       availableMemory: null
     }

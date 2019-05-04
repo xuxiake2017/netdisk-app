@@ -1,30 +1,37 @@
 <template>
   <div class="chat">
-    <div>
+    <!--消息列表-->
+    <div class="chat-message-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 0">
       <ul class="layui-layim-list layui-show">
-        <li layim-event="chat" data-type="friend" data-index="0" class="layim-friend100001 " @click="chatPopupOpen"><img
-          src="//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg"><span>贤心</span>
-          <p>这些都是测试数据，实际使用请严格按照该格式返回</p><span class="layim-msg-status">new</span></li>
-        <li layim-event="chat" data-type="friend" data-index="0" class="layim-friend100001222 "><img
-          src="//tva4.sinaimg.cn/crop.0.1.1125.1125.180/475bb144jw8f9nwebnuhkj20v90vbwh9.jpg"><span>刘小涛</span>
-          <p>如约而至，不负姊妹欢乐颂</p><span class="layim-msg-status">new</span></li>
-        <li layim-event="chat" data-type="friend" data-index="0" class="layim-friend10034001 "><img
-          src="//tva2.sinaimg.cn/crop.1.0.747.747.180/633f068fjw8f9h040n951j20ku0kr74t.jpg"><span>谢小楠</span>
-          <p></p><span class="layim-msg-status">new</span></li>
-        <li layim-event="chat" data-type="friend" data-index="0" class="layim-friend168168 layim-list-gray"><img
-          src="//tva1.sinaimg.cn/crop.0.0.180.180.180/7fde8b93jw1e8qgp5bmzyj2050050aa8.jpg"><span>马小云</span>
-          <p>让天下没有难写的代码</p><span class="layim-msg-status">new</span></li>
-        <li layim-event="chat" data-type="friend" data-index="0" class="layim-friend666666 "><img
-          src="//tva1.sinaimg.cn/crop.0.0.512.512.180/6a4acad5jw8eqi6yaholjj20e80e8t9f.jpg"><span>徐小峥</span>
-          <p>代码在囧途，也要写到底</p><span class="layim-msg-status">new</span></li>
+        <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item)">
+          <img :src="friendMap.get(item.friendId).avatar"/>
+          <span>{{friendMap.get(item.friendId).username}}</span>
+          <p>{{item.content}}</p>
+        </li>
       </ul>
     </div>
+    <!--好友列表-->
+    <div class="chat-frient-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 1">
+      <ul class="layui-layim-list layui-show">
+        <li v-for="(item, index) in user.friendList" :key="index" @click="chatPopupOpen(item)">
+          <img :src="item.avatar"/>
+          <span>{{item.username}}</span>
+          <p>{{item.signature}}</p>
+        </li>
+      </ul>
+    </div>
+    <van-tabbar v-model="active">
+      <van-tabbar-item icon="comment-o">消息</van-tabbar-item>
+      <van-tabbar-item icon="friends-o">好友</van-tabbar-item>
+      <van-tabbar-item icon="volume-o">通知</van-tabbar-item>
+    </van-tabbar>
     <van-popup
       v-model="show"
       class="chat-popup"
       position="right">
       <van-nav-bar
-        :title="chatFriend"
+        v-if="friend"
+        :title="friend.username"
         left-text="返回"
         left-arrow
         @click-left="chatPopupClose">
@@ -72,123 +79,146 @@
 </template>
 
 <script>
-import { SendMessage } from '../api/tuling'
+// import { SendMessage } from '../api/tuling'
+import { GetFriendMessages } from '../api/friendMessage'
 import util from '@/utils/util'
+import { mapGetters } from 'vuex'
 export default {
   name: 'Chat',
   data () {
     return {
+      active: 0,
       show: false,
-      chatFriend: '贤心',
       messageCurrent: '',
-      messages: [
-        {
-          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
-          date: '2019-04-29 20:17:41',
-          user: '纸飞机',
-          msg: '哈哈哈',
-          mine: true
-        },
-        {
-          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
-          date: '2019-04-29 20:17:42',
-          user: '小闲',
-          msg: '嘻嘻嘻',
-          mine: false
-        },
-        {
-          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
-          date: '2019-04-29 20:17:41',
-          user: '纸飞机',
-          msg: '哈哈哈',
-          mine: true
-        },
-        {
-          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
-          date: '2019-04-29 20:17:42',
-          user: '小闲',
-          msg: '嘻嘻嘻',
-          mine: false
-        },
-        {
-          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
-          date: '2019-04-29 20:17:41',
-          user: '纸飞机',
-          msg: '哈哈哈',
-          mine: true
-        },
-        {
-          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
-          date: '2019-04-29 20:17:42',
-          user: '小闲',
-          msg: '嘻嘻嘻',
-          mine: false
-        },
-        {
-          img: '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg',
-          date: '2019-04-29 20:17:41',
-          user: '纸飞机',
-          msg: '哈哈哈',
-          mine: true
-        },
-        {
-          img: '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg',
-          date: '2019-04-29 20:17:42',
-          user: '小闲',
-          msg: '嘻嘻嘻',
-          mine: false
-        }
-      ]
+      messages: [],
+      friendMessages: [],
+      friend: null,
+      friendMessagesAll: []
     }
   },
   methods: {
     chatPopupClose () {
       this.show = false
+      this.getFriendMessages()
     },
-    chatPopupOpen () {
+    chatPopupOpen (item) {
       this.show = true
+      this.friend = this.friendMap.get(item.friendId)
+      this.messages = []
+      this.friendMessagesAll.forEach(item => {
+        let temp = {}
+        if (this.friend.friendId === item.friendId) {
+          if (item.from === this.user.id) {
+            // 自己发送的消息
+            temp.img = this.user.avatar
+            temp.user = this.user.name
+            temp.mine = true
+          } else {
+            // 好友发送的消息
+            temp.img = this.friendMap.get(item.friendId).avatar
+            temp.user = this.friendMap.get(item.friendId).username
+            temp.mine = false
+          }
+          temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
+          temp.msg = item.content
+          this.messages.push(temp)
+        }
+      })
     },
     sendMessage () {
       if (!this.messageCurrent) {
         return
       }
-      this.$socket.send(this.messageCurrent)
-      // let send = {}
-      // send.img = '//tva1.sinaimg.cn/crop.0.0.118.118.180/5db11ff4gw1e77d3nqrv8j203b03cweg.jpg'
-      // send.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
-      // send.user = '纸飞机'
-      // send.msg = this.messageCurrent
-      // send.mine = true
-      // this.messages.push(send)
-      // const message = this.messageCurrent
-      // this.messageCurrent = ''
-      // SendMessage({ message }).then(res => {
-      //   let receive = {}
-      //   receive.img = '//tva3.sinaimg.cn/crop.0.0.180.180.180/7f5f6861jw1e8qgp5bmzyj2050050aa8.jpg'
-      //   receive.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
-      //   receive.user = '小闲'
-      //   receive.msg = res.data.results[0].values.text
-      //   receive.mine = false
-      //   this.messages.push(receive)
-      // }).catch(res => {
-      // })
+      let packet = {}
+      packet['from'] = this.user.id
+      packet['to'] = this.friend.friendId
+      packet['content'] = this.messageCurrent
+      this.$socket.send(JSON.stringify(packet))
+      let temp = {}
+      temp.img = this.user.avatar
+      temp.user = this.user.name
+      temp.mine = true
+      temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+      temp.msg = this.messageCurrent
+      this.messages.push(temp)
+      this.messageCurrent = ''
+    },
+    getFriendMessages () {
+      this.friendMessages = []
+      GetFriendMessages().then(res => {
+        let temp = new Map()
+        this.friendMessagesAll = res.data
+        this.friendMessagesAll.forEach(item => {
+          const friendId = item.friendId
+          const friend = temp.get(friendId);
+          if (!friend) {
+            temp.set(friendId, item)
+          } else {
+            if (item.createTime >= friend.createTime) {
+              temp.set(friendId, item)
+            }
+          }
+        })
+        temp.forEach((value, key) => {
+          this.friendMessages.push(value)
+        })
+      })
     }
   },
   computed: {
-    clientHeight: {
-      get () {
-        return this.$store.getters.clientHeight
-      }
-    }
+    ...mapGetters([
+      'clientHeight',
+      'friendMap',
+      'user',
+      'message'
+    ])
+  },
+  watch: {
   },
   updated () {
-    this.$nextTick(() => {
-      const chatMain = this.$refs.chatMain
-      const scrollHeight = chatMain.scrollHeight
-      if (scrollHeight > 0) {
-        chatMain.scrollTop = scrollHeight
+    if (this.show) {
+      this.$nextTick(() => {
+        const chatMain = this.$refs.chatMain
+        const scrollHeight = chatMain.scrollHeight
+        if (scrollHeight > 0) {
+          chatMain.scrollTop = scrollHeight
+        }
+      })
+    }
+  },
+  mounted () {
+    this.getFriendMessages()
+    this.$options.sockets.onmessage = (data) => {
+      if (!this.show) {
+        this.friendMessages = []
+        GetFriendMessages().then(res => {
+          let temp = new Map()
+          this.friendMessagesAll = res.data
+          this.friendMessagesAll.forEach(item => {
+            const friendId = item.friendId
+            const friend = temp.get(friendId);
+            if (!friend) {
+              temp.set(friendId, item)
+            } else {
+              if (item.createTime >= friend.createTime) {
+                temp.set(friendId, item)
+              }
+            }
+          })
+          temp.forEach((value, key) => {
+            this.friendMessages.push(value)
+          })
+        })
       }
-    })
+      const receive = JSON.parse(data.data)
+      let temp = {}
+      temp.img = this.friendMap.get(receive.from).avatar
+      temp.user = this.friendMap.get(receive.from).username
+      temp.mine = false
+      temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+      temp.msg = receive.content
+      this.messages.push(temp)
+    }
   }
 }
 </script>
@@ -199,6 +229,10 @@ export default {
 
   .chat {
     margin-top: 46px;
+    .chat-message-list {
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
   }
   .chat-popup {
     height: 100%;
@@ -220,7 +254,4 @@ export default {
     bottom: 0;
     background-color: white;
   }
-  /*.layui-layim-list {*/
-    /*height: 100%;*/
-  /*}*/
 </style>

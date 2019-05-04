@@ -14,6 +14,7 @@ import Chat from '@/components/Chat'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
+import { GetFriendMessages } from '@/api/friendMessage'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 
@@ -177,6 +178,9 @@ router.beforeEach((to, from, next) => {
       } else {
         GetInfo().then(res => {
           store.commit('storeUser', res.data)
+          res.data.friendList.forEach(item => {
+            store.commit('setFriend', item)
+          })
           next()
         }).catch(res => {
           store.commit('delUser')

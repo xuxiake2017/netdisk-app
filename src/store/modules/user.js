@@ -2,7 +2,9 @@ import { removeToken } from '@/utils/auth'
 export default {
   state: {
     // 登录的用户信息
-    user: null
+    user: null,
+    // 好友map
+    friendMap: null
   },
   mutations: {
     storeUser (state, user) {
@@ -14,10 +16,17 @@ export default {
     },
     clearMessages (state) {
       state.user.messages = []
+    },
+    setFriend (state, val) {
+      if (!state.friendMap) {
+        state.friendMap = new Map()
+      }
+      state.friendMap.set(val.friendId, val)
     }
   },
   actions: {},
   getters: {
-    user: state => state.user
+    user: state => state.user,
+    friendMap: state => state.friendMap
   }
 }

@@ -45,7 +45,7 @@ Vue.use(VueNativeSock, 'ws://127.0.0.1:8080/netdisk/chat/message', {
   // 自动重连
   reconnection: true, // (Boolean) whether to reconnect automatically (false)
   reconnectionAttempts: 5, // (Number) number of reconnection attempts before giving up (Infinity),
-  reconnectionDelay: 3000, // (Number) how long to initially wait before attempting a new (1000)
+  reconnectionDelay: 3000 // (Number) how long to initially wait before attempting a new (1000)
 })
 
 /* eslint-disable no-new */
