@@ -20,6 +20,39 @@
         </li>
       </ul>
     </div>
+    <!--通知-->
+    <div :style="{'height': `${clientHeight - 100}px`}" v-if="active === 2" class="chat-frient-notify">
+      <ul class="layim-msgbox">
+        <li v-for="(item, index) in friendNotifies" :key="index" :class="{'layim-msgbox-system': item.content.respondent !== user.id}">
+          <div v-if="item.content.respondent === user.id">
+            <a>
+              <img :src="item.content.applicantAvatar" class="layui-circle layim-msgbox-avatar">
+            </a>
+            <p class="layim-msgbox-user"><a>{{item.content.applicantUsername}}</a> <span>{{formatDateHuman(item.content.createTime)}}</span></p>
+            <p class="layim-msgbox-content"> 申请添加你为好友</p>
+            <p class="msgbox-postscript">附言: {{item.content.postscript}}</p>
+            <p class="layim-msgbox-btn">
+              <span v-if="item.content.verify === 0">
+                <van-button size="small" type="primary" @click="agree(item)">同意</van-button>
+                <van-button size="small" plain type="primary" @click="refuse(item)">拒绝</van-button>
+              </span>
+              <span v-if="item.content.verify === 1">
+                已同意
+              </span>
+              <span v-if="item.content.verify === 2">
+                已拒绝
+              </span>
+            </p>
+          </div>
+          <div v-else>
+            <p><em>系统：</em>{{item.content.respondentUsername}} {{applyVerify[item.content.verify]}}了你的好友申请<span>{{formatDateHuman(item.content.createTime)}}</span></p>
+          </div>
+        </li>
+      </ul>
+      <div class="layui-flow-more" v-if="friendNotifies.length === 0">
+        <li class="layim-msgbox-tips">暂无更多新消息</li>
+      </div>
+    </div>
     <van-tabbar v-model="active">
       <van-tabbar-item icon="comment-o">消息</van-tabbar-item>
       <van-tabbar-item icon="friends-o">好友</van-tabbar-item>
@@ -81,6 +114,8 @@
 <script>
 // import { SendMessage } from '../api/tuling'
 import { GetFriendMessages } from '../api/friendMessage'
+import { GetAllFriendNotify } from '../api/friendNotify'
+import { FriendApplyForOption } from '../api/friendApplyFor'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
 export default {
@@ -93,7 +128,12 @@ export default {
       messages: [],
       friendMessages: [],
       friend: null,
-      friendMessagesAll: []
+      friendMessagesAll: [],
+      friendNotifies: [],
+      applyVerify: {
+        1: '同意',
+        2: '拒绝'
+      }
     }
   },
   methods: {
@@ -129,10 +169,15 @@ export default {
       if (!this.messageCurrent) {
         return
       }
+      if (!this.socket.isConnected) {
+        this.$toast('websocket连接断开，请刷新页面!')
+        return
+      }
       let packet = {}
       packet['from'] = this.user.id
       packet['to'] = this.friend.friendId
       packet['content'] = this.messageCurrent
+      packet['createTime'] = new Date().getTime()
       this.$socket.send(JSON.stringify(packet))
       let temp = {}
       temp.img = this.user.avatar
@@ -163,6 +208,45 @@ export default {
           this.friendMessages.push(value)
         })
       })
+    },
+    getAllFriendNotify () {
+      GetAllFriendNotify().then(res => {
+        this.friendNotifies = res.data
+        console.log(this.friendNotifies)
+      })
+    },
+    formatDateHuman (date) {
+      return util.formatDateHuman(date)
+    },
+    agree (item) {
+      this.$dialog.confirm({
+        title: '标题',
+        message: `确认同意添加${item.content.applicantUsername}为好友？`
+      }).then(() => {
+        FriendApplyForOption({
+          applicant: item.content.applicant,
+          option: 1
+        }).then(res => {
+          this.getAllFriendNotify()
+        })
+      }).catch(() => {
+        // on cancel
+      });
+    },
+    refuse (item) {
+      this.$dialog.confirm({
+        title: '标题',
+        message: `确认拒绝${item.content.applicantUsername}的好友申请？`
+      }).then(() => {
+        FriendApplyForOption({
+          applicant: item.content.applicant,
+          option: 2
+        }).then(res => {
+          this.getAllFriendNotify()
+        })
+      }).catch(() => {
+        // on cancel
+      });
     }
   },
   computed: {
@@ -170,10 +254,16 @@ export default {
       'clientHeight',
       'friendMap',
       'user',
-      'message'
-    ])
+      'socket'
+    ]),
+    createTime () {
+      return this.socket.receive.createTime
+    }
   },
   watch: {
+    'createTime': function () {
+      console.log(this.socket)
+    }
   },
   updated () {
     if (this.show) {
@@ -188,6 +278,7 @@ export default {
   },
   mounted () {
     this.getFriendMessages()
+    this.getAllFriendNotify()
     this.$options.sockets.onmessage = (data) => {
       if (!this.show) {
         this.friendMessages = []
@@ -253,5 +344,38 @@ export default {
     width: 100%;
     bottom: 0;
     background-color: white;
+  }
+  .chat-frient-notify {
+    font-size: 14px;
+    .layim-msgbox {
+      margin: 15px;
+    }
+    .layim-msgbox li {
+      position: relative;
+      margin-bottom: 10px;
+      padding: 0 130px 10px 50px;
+      line-height: 22px;
+      border-bottom: 1px dotted #e2e2e2;
+    }
+    .layim-msgbox .layim-msgbox-tips{margin: 0; padding: 10px 0; border: none; text-align: center; color: #999;}
+    .layim-msgbox .layim-msgbox-system{padding: 0 10px 10px 10px;}
+    .layim-msgbox li p span{padding-left: 5px; color: #999;}
+    .layim-msgbox li p em{font-style: normal; color: #FF5722;}
+
+    .layim-msgbox-avatar {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 36px;
+      height: 36px;
+      margin-top: 15px;
+    }
+    .layim-msgbox-user{padding-top: 5px;}
+    .layim-msgbox-content{margin-top: 3px;}
+    .msgbox-postscript {
+      color: #999;
+    }
+    .layim-msgbox .layui-btn-small{padding: 0 15px; margin-left: 5px;}
+    .layim-msgbox-btn{position: absolute; right: 0; top: 20px; color: #999;}
   }
 </style>

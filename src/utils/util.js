@@ -9,14 +9,23 @@ function padding (s, len) {
 }
 
 export default {
-  getQueryStringByName: function (name) {
-    let reg = new RegExp('(^|&)' + name + '=([^&]*)(&|$)', 'i')
-    let r = window.location.search.substr(1).match(reg);
-    let context = '';
-    if (r != null) { context = r[2]; }
-    reg = null;
-    r = null;
-    return context == null || context === '' || context === 'undefined' ? '' : context;
+  formatDateHuman (time) {
+    const d = time
+    const now = new Date().getTime()
+
+    const diff = (now - d) / 1000
+
+    if (diff < 30) {
+      return '刚刚'
+    } else if (diff < 3600) { // less 1 hour
+      return Math.ceil(diff / 60) + '分钟前'
+    } else if (diff < 3600 * 24) {
+      return Math.ceil(diff / 3600) + '小时前'
+    } else if (diff < 3600 * 24) {
+      return '1天前'
+    } else {
+      return Math.ceil(diff / (3600 * 24)) + '天前'
+    }
   },
   formatDate: {
 

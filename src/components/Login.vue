@@ -87,7 +87,7 @@ export default {
         this.loading = true
         RequestLogin({ ...this.loginData }).then(res => {
           this.loading = false
-          this.$store.commit('storeUser', res.data)
+          // this.$store.commit('storeUser', res.data)
           setToken(res.data.token)
           this.$router.push({ path: '/fileList' })
           // 打开websocket连接

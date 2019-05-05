@@ -35,7 +35,7 @@ Vue.use(ElementUI)
 
 Vue.prototype.$NetdiskConstant = NetdiskConstant
 Vue.config.productionTip = false
-Vue.use(VueNativeSock, 'ws://127.0.0.1:8080/netdisk/chat/message', {
+Vue.use(VueNativeSock, `${process.env.BASE_API.replace(/http[s]?:/, str => { return str === 'http:' ? 'ws:' : 'wss:' })}/chat/message`, {
   // 引入vuex
   store: store,
   // 设置别名
@@ -44,7 +44,7 @@ Vue.use(VueNativeSock, 'ws://127.0.0.1:8080/netdisk/chat/message', {
   connectManually: true,
   // 自动重连
   reconnection: true, // (Boolean) whether to reconnect automatically (false)
-  reconnectionAttempts: 5, // (Number) number of reconnection attempts before giving up (Infinity),
+  reconnectionAttempts: 1, // (Number) number of reconnection attempts before giving up (Infinity),
   reconnectionDelay: 3000 // (Number) how long to initially wait before attempting a new (1000)
 })
 

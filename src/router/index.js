@@ -14,7 +14,6 @@ import Chat from '@/components/Chat'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
-import { GetFriendMessages } from '@/api/friendMessage'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 

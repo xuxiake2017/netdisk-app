@@ -61,8 +61,13 @@ export default {
       }
     },
     ...mapGetters([
-      'user'
+      'user',
+      'socket',
+      'friendMap'
     ]),
+    createTime () {
+      return this.socket.receive.createTime
+    },
     title: {
       get () {
         return this.$route.meta.title
@@ -87,6 +92,19 @@ export default {
     memoryInfo: {
       get () {
         return `${this.formatFileSize(parseInt(this.user.usedMemory))} / ${this.formatFileSize(parseInt(this.user.totalMemory))}`
+      }
+    }
+  },
+  watch: {
+    // 监测是否收到新消息（以时间戳判断）
+    'createTime': function () {
+      const routeName = this.$route.name
+      if (routeName !== 'chat') {
+        Notify({
+          message: `${this.friendMap.get(this.socket.receive.from).username}: ${this.socket.receive.content}`,
+          duration: 3000,
+          background: '#1989fa'
+        });
       }
     }
   },

@@ -11,8 +11,11 @@ export default {
   state: {
     socket: {
       isConnected: false,
-      message: '',
-      reconnectError: false
+      message: null,
+      reconnectError: false,
+      receive: {
+        createTime: 1
+      }
     }
   },
   mutations: {
@@ -31,8 +34,9 @@ export default {
     // default handler called for all methods
     [SOCKET_ONMESSAGE] (state, message) {
       console.log(SOCKET_ONMESSAGE)
-      console.log(message)
       state.socket.message = message
+      state.socket.receive = JSON.parse(message.data)
+      console.log(state.socket.receive)
     },
     // mutations for reconnect methods
     [SOCKET_RECONNECT] (state, count) {
