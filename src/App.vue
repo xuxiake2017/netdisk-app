@@ -9,8 +9,10 @@ export default {
   name: 'App',
   created () {
     this.clientHeight = `${document.documentElement.clientHeight}`
+    this.clientWidth = `${document.documentElement.clientWidth}`
     window.addEventListener('resize', () => {
       this.clientHeight = `${document.documentElement.clientHeight}`
+      this.clientWidth = `${document.documentElement.clientWidth}`
     })
   },
   computed: {
@@ -20,6 +22,14 @@ export default {
       },
       set (val) {
         this.$store.commit('setClientHeight', val)
+      }
+    },
+    clientWidth: {
+      get () {
+        return this.$store.getters.clientWidth
+      },
+      set (val) {
+        this.$store.commit('setClientWidth', val)
       }
     }
   }
@@ -40,8 +50,8 @@ export default {
     background-color: #1989fa;
     border: 1px solid #1989fa;
   }
-  .home-nav-bar .van-nav-bar__left {
-    left: 15px;
-    top: 8px;
-  }
+  /*.home-nav-bar .van-nav-bar__left {*/
+    /*left: 15px;*/
+    /*top: 8px;*/
+  /*}*/
 </style>

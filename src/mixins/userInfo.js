@@ -6,6 +6,9 @@ export default {
     getInfo () {
       GetInfo().then(res => {
         this.$store.commit('storeUser', res.data)
+        res.data.friendList.forEach(item => {
+          this.$store.commit('setFriend', item)
+        })
       }).catch(res => {})
     }
   }

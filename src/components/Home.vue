@@ -29,6 +29,12 @@
         <!--<el-progress :text-inside="true" :stroke-width="18" :percentage="percentage" style="margin: 20px 15px">{{memoryInfo}}</el-progress>-->
       </van-row>
     </van-popup>
+    <van-popup v-model="friendMessagePopupShow" position="top" :overlay="false" class="friend-message-popup layui-layer-page layui-box layui-layim-min">
+      <div id="" class="layui-layer-content" style="height: 40px;" @click="jumpToChat">
+        <img id="layui-layim-min" :src="friendMessage.friendAvatar" style="cursor: move;">
+        <span>{{friendMessage.content}}</span>
+      </div>
+    </van-popup>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
       <img :src="user.avatar" class="avatar-top" slot="left"/>
       <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
@@ -48,7 +54,14 @@ export default {
   name: 'Home',
   data () {
     return {
-      routes: []
+      routes: [],
+      friendMessagePopupShow: false,
+      friendMessage: {
+        content: '',
+        friendId: null,
+        friendUsername: '',
+        friendAvatar: ''
+      }
     }
   },
   computed: {
@@ -62,11 +75,11 @@ export default {
     },
     ...mapGetters([
       'user',
-      'socket',
+      'receive',
       'friendMap'
     ]),
     createTime () {
-      return this.socket.receive.createTime
+      return this.receive.createTime
     },
     title: {
       get () {
@@ -100,11 +113,14 @@ export default {
     'createTime': function () {
       const routeName = this.$route.name
       if (routeName !== 'chat') {
-        Notify({
-          message: `${this.friendMap.get(this.socket.receive.from).username}: ${this.socket.receive.content}`,
-          duration: 3000,
-          background: '#1989fa'
-        });
+        this.friendMessagePopupShow = true
+        this.friendMessage.friendId = this.receive.from
+        this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
+        this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
+        this.friendMessage.content = this.receive.content
+        window.setTimeout(() => {
+          this.friendMessagePopupShow = false
+        }, 3000)
       }
     }
   },
@@ -160,6 +176,14 @@ export default {
         return `${name.substring(0, 8)}...`
       }
       return name
+    },
+    jumpToChat () {
+      this.$router.push({
+        name: 'chat',
+        query: {
+          id: this.friendMessage.friendId
+        }
+      })
     }
   },
   mounted () {
@@ -211,5 +235,13 @@ export default {
       border-radius: 15px;
       box-shadow:1px 1px 3px #333333;
     }
+  }
+  .friend-message-popup {
+    width: 100%;
+    height: 50px;
+    box-shadow: 1px 1px 50px rgba(0,0,0,.3);
+  }
+  .layui-layer-content span {
+    width: 250px;
   }
 </style>

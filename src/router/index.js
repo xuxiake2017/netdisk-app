@@ -11,6 +11,7 @@ import Verify from '@/components/Verify'
 import Message from '@/components/Message'
 import UserInfo from '@/components/UserInfo'
 import Chat from '@/components/Chat'
+import Emoji from '@/components/emoji'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
@@ -99,6 +100,15 @@ const routes = [
           icon: 'user-o'
         },
         component: UserInfo
+      },
+      {
+        path: 'emoji',
+        name: 'emoji',
+        meta: {
+          title: 'Emoji',
+          icon: 'user-o'
+        },
+        component: Emoji
       }
     ]
   }
@@ -112,10 +122,10 @@ const router = new Router({
 
 function browser (to) {
   const UA = navigator.userAgent;
-  const ipad = !!(UA.match(/(iPad).*OS\s([\d_]+)/)),
-    isIphone = !!(!ipad && UA.match(/(iPhone\sOS)\s([\d_]+)/)),
-    isAndroid = !!(UA.match(/(Android)\s+([\d.]+)/)),
-    isMobile = !!(isIphone || isAndroid)
+  const ipad = !!(UA.match(/(iPad).*OS\s([\d_]+)/))
+  const isIphone = !!(!ipad && UA.match(/(iPhone\sOS)\s([\d_]+)/))
+  const isAndroid = !!(UA.match(/(Android)\s+([\d.]+)/))
+  const isMobile = !!(isIphone || isAndroid)
   const protocol = window.location.protocol
   const hostname = window.location.hostname
   const port = window.location.port

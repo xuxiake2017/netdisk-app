@@ -3,7 +3,7 @@
     <!--消息列表-->
     <div class="chat-message-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 0">
       <ul class="layui-layim-list layui-show">
-        <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item)">
+        <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item.friendId)">
           <img :src="friendMap.get(item.friendId).avatar"/>
           <span>{{friendMap.get(item.friendId).username}}</span>
           <p>{{item.content}}</p>
@@ -13,7 +13,7 @@
     <!--好友列表-->
     <div class="chat-frient-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 1">
       <ul class="layui-layim-list layui-show">
-        <li v-for="(item, index) in user.friendList" :key="index" @click="chatPopupOpen(item)">
+        <li v-for="(item, index) in user.friendList" :key="index" @click="chatPopupOpen(item.friendId)">
           <img :src="item.avatar"/>
           <span>{{item.username}}</span>
           <p>{{item.signature}}</p>
@@ -44,8 +44,15 @@
               </span>
             </p>
           </div>
-          <div v-else>
-            <p><em>系统：</em>{{item.content.respondentUsername}} {{applyVerify[item.content.verify]}}了你的好友申请<span>{{formatDateHuman(item.content.createTime)}}</span></p>
+          <div v-if="item.content.applicant === user.id">
+            <p v-if="item.content.verify === 0">
+              <em>系统：</em>你向{{item.content.respondentUsername}}的好友申请待验证
+              <span>{{formatDateHuman(item.content.createTime)}}</span>
+            </p>
+            <p v-else>
+              <em>系统：</em>{{item.content.respondentUsername}} {{applyVerify[item.content.verify]}}了你的好友申请
+              <span>{{formatDateHuman(item.content.createTime)}}</span>
+            </p>
           </div>
         </li>
       </ul>
@@ -81,32 +88,36 @@
                 <cite>{{item.user}}<i>{{item.date}}</i></cite>
               </div>
             </div>
-            <div class="layim-chat-text">{{item.msg}}</div>
+            <div class="layim-chat-text">
+              <chat-text :msg="item.msg"></chat-text>
+            </div>
           </li>
         </ul>
       </div>
-      <div class="layim-chat-footer" ref="chatFooter">
+      <div class="layim-chat-footer" ref="chatFooter" :class="{'layim-chat-footer-keyboard-up': emojiKeyBoardShow, 'layim-chat-footer-keyboard-down': !emojiKeyBoardShow}">
         <!--<div class="layim-chat-textarea"><textarea></textarea></div>-->
         <div style="position: relative">
           <el-input
             v-model="messageCurrent"
             type="textarea"
             autosize
+            @focus="onFocusHandler"
             placeholder="请输入内容">
           </el-input>
           <el-button type="text" class="message-send-button" @click="sendMessage">发送</el-button>
         </div>
         <div class="layui-unselect layim-chat-tool">
-          <span class="layui-icon layim-tool-face" title="选择表情" layim-event="face"></span>
-          <span class="layui-icon layim-tool-image" title="上传图片" layim-event="image">
+          <span class="layui-icon layim-tool-face" title="选择表情" @click="emojiKeyBoard"></span>
+          <span class="layui-icon layim-tool-image" title="上传图片">
             <input type="file" name="file">
           </span>
-          <span class="layui-icon layim-tool-image" title="发送文件" layim-event="image" data-type="file">
+          <span class="layui-icon layim-tool-image" title="发送文件" data-type="file">
             <input type="file" name="file">
           </span>
-          <span class="layim-tool-log" layim-event="chatLog"><i class="layui-icon"></i>聊天记录</span>
+          <span class="layim-tool-log"><i class="layui-icon"></i>聊天记录</span>
         </div>
       </div>
+      <emoji style="position: absolute; bottom: 0" v-if="emojiKeyBoardShow" @select="emojiSelect"></emoji>
     </van-popup>
   </div>
 </template>
@@ -116,10 +127,20 @@
 import { GetFriendMessages } from '../api/friendMessage'
 import { GetAllFriendNotify } from '../api/friendNotify'
 import { FriendApplyForOption } from '../api/friendApplyFor'
+import usermixin from '@/mixins/userInfo'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
+import emoji from './emoji'
+import ChatText from './ChatText'
+// import { emojiConvert } from '../utils/emoji'
+import { ParseToHtmlDecimal } from '../api/emoji'
 export default {
   name: 'Chat',
+  mixins: [usermixin],
+  components: {
+    emoji,
+    ChatText
+  },
   data () {
     return {
       active: 0,
@@ -133,17 +154,21 @@ export default {
       applyVerify: {
         1: '同意',
         2: '拒绝'
-      }
+      },
+      emojiKeyBoardShow: false
     }
   },
   methods: {
     chatPopupClose () {
       this.show = false
+      this.emojiKeyBoardShow = false
+      this.$refs.chatMain.style.height = `${this.clientHeight - 130}px`
+      this.messageCurrent = ''
       this.getFriendMessages()
     },
-    chatPopupOpen (item) {
+    chatPopupOpen (friendId) {
       this.show = true
-      this.friend = this.friendMap.get(item.friendId)
+      this.friend = this.friendMap.get(friendId)
       this.messages = []
       this.friendMessagesAll.forEach(item => {
         let temp = {}
@@ -187,6 +212,18 @@ export default {
       temp.msg = this.messageCurrent
       this.messages.push(temp)
       this.messageCurrent = ''
+
+      // console.log(this.messageCurrent)
+      // const newData = this.messageCurrent.replace(/(:)\w+(:)/g, function (s, match) {
+      //   return emojiConvert(s)
+      // })
+    },
+    // 输入框获得焦点
+    onFocusHandler () {
+      console.log('onFocusHandler')
+      this.emojiKeyBoardShow = false
+      const $chatMain = this.$refs.chatMain
+      $chatMain.style.height = `${this.clientHeight - 130}px`
     },
     getFriendMessages () {
       this.friendMessages = []
@@ -228,6 +265,7 @@ export default {
           option: 1
         }).then(res => {
           this.getAllFriendNotify()
+          this.getInfo()
         })
       }).catch(() => {
         // on cancel
@@ -247,6 +285,26 @@ export default {
       }).catch(() => {
         // on cancel
       });
+    },
+    emojiKeyBoard () {
+      if (this.emojiKeyBoardShow) {
+        const $chatMain = this.$refs.chatMain
+        $chatMain.style.height = `${this.clientHeight - 130}px`
+        this.emojiKeyBoardShow = false
+      } else {
+        const $chatMain = this.$refs.chatMain
+        $chatMain.style.height = `${this.clientHeight - 130 - 160}px`
+        this.emojiKeyBoardShow = true
+      }
+    },
+    emojiSelect (emoji_) {
+      ParseToHtmlDecimal({
+        aliase: emoji_
+      }).then(res => {
+        console.log(res.data)
+        this.messageCurrent = `${this.messageCurrent + res.data}`
+      })
+      // '😂😂😂'
     }
   },
   computed: {
@@ -279,6 +337,7 @@ export default {
   mounted () {
     this.getFriendMessages()
     this.getAllFriendNotify()
+    // const friendId = this.$route.query.id
     this.$options.sockets.onmessage = (data) => {
       if (!this.show) {
         this.friendMessages = []
@@ -315,9 +374,21 @@ export default {
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-  @import "../styles/layui/layui.css";
-  @import "../styles/layui/layim.css";
+  /*@import "../styles/layui/layui.css";*/
+  /*@import "../styles/layui/layim.css";*/
 
+  .layim-chat-footer-keyboard-up {
+    position: fixed;
+    width: 100%;
+    bottom: 160px;
+    background-color: white;
+  }
+  .layim-chat-footer-keyboard-down {
+    position: fixed;
+    width: 100%;
+    bottom: 0;
+    background-color: white;
+  }
   .chat {
     margin-top: 46px;
     .chat-message-list {
@@ -332,19 +403,20 @@ export default {
   .layim-chat-footer .message-send-button {
     position: absolute;
     right: 0;
-    bottom: 0;
-    margin-bottom: 7px;
+    bottom: -5px;
+    /*margin-bottom: 7px;*/
+    margin-top: 5px;
     margin-right: 15px;
   }
   .layim-chat-main {
     height: 500px;
   }
-  .layim-chat-footer {
-    position: fixed;
-    width: 100%;
-    bottom: 0;
-    background-color: white;
-  }
+  /*.layim-chat-footer {*/
+    /*position: fixed;*/
+    /*width: 100%;*/
+    /*bottom: 0;*/
+    /*background-color: white;*/
+  /*}*/
   .chat-frient-notify {
     font-size: 14px;
     .layim-msgbox {
