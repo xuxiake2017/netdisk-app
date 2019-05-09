@@ -102,6 +102,7 @@
             type="textarea"
             autosize
             @focus="onFocusHandler"
+            @blur="onBlurHandler"
             placeholder="请输入内容">
           </el-input>
           <el-button type="text" class="message-send-button" @click="sendMessage">发送</el-button>
@@ -212,11 +213,6 @@ export default {
       temp.msg = this.messageCurrent
       this.messages.push(temp)
       this.messageCurrent = ''
-
-      // console.log(this.messageCurrent)
-      // const newData = this.messageCurrent.replace(/(:)\w+(:)/g, function (s, match) {
-      //   return emojiConvert(s)
-      // })
     },
     // 输入框获得焦点
     onFocusHandler () {
@@ -224,6 +220,10 @@ export default {
       this.emojiKeyBoardShow = false
       const $chatMain = this.$refs.chatMain
       $chatMain.style.height = `${this.clientHeight - 130}px`
+    },
+    // 输入框失去焦点
+    onBlurHandler () {
+      console.log('onBlurHandler')
     },
     getFriendMessages () {
       this.friendMessages = []
@@ -293,8 +293,10 @@ export default {
         this.emojiKeyBoardShow = false
       } else {
         const $chatMain = this.$refs.chatMain
-        $chatMain.style.height = `${this.clientHeight - 130 - 160}px`
         this.emojiKeyBoardShow = true
+        window.setTimeout(() => {
+          $chatMain.style.height = `${this.clientHeight - 130 - 160}px`
+        }, 300)
       }
     },
     emojiSelect (emoji_) {
