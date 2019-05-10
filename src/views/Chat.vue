@@ -108,7 +108,7 @@
           <el-button type="text" class="message-send-button" @click="sendMessage">发送</el-button>
         </div>
         <div class="layui-unselect layim-chat-tool">
-          <span class="layui-icon layim-tool-face" title="选择表情" @click="emojiKeyBoard"></span>
+          <span class="layui-icon layim-tool-face" title="选择表情" @click="emojiKeyBoard" :class="{'emoji-key-board-show': emojiKeyBoardShow, 'emoji-key-board-hide': !emojiKeyBoardShow}"></span>
           <span class="layui-icon layim-tool-image" title="上传图片">
             <input type="file" name="file">
           </span>
@@ -120,6 +120,11 @@
       </div>
       <emoji style="position: absolute; bottom: 0" v-if="emojiKeyBoardShow" @select="emojiSelect"></emoji>
     </van-popup>
+    <van-actionsheet
+      v-model="addActionSheetShow"
+      :actions="actions"
+      @select="onSelect"
+    />
   </div>
 </template>
 
@@ -145,52 +150,84 @@ export default {
     return {
       clientHeight: '',
       active: 0,
+      // 聊天弹窗打开关闭标记
       show: false,
+      // 聊天输入框的内容
       messageCurrent: '',
+      // 存放与单个好友的消息
+      messagesMap: new Map(),
+      // 当前聊天页面的好友消息
       messages: [],
+      // 与好友的消息列表（包含一条最新的消息）
       friendMessages: [],
+      // 当前对话的好友
       friend: null,
+      // 所有的聊天记录
       friendMessagesAll: [],
+      // 好友通知
       friendNotifies: [],
+      // 好友申请验证
       applyVerify: {
         1: '同意',
         2: '拒绝'
       },
-      emojiKeyBoardShow: false
+      // emoji键盘显示关闭标记
+      emojiKeyBoardShow: false,
+      actions: [
+        {
+          name: '添加好友'
+        },
+        {
+          name: '添加群'
+        }
+      ]
     }
   },
   methods: {
+    // 聊天对话框关闭
     chatPopupClose () {
       this.show = false
       this.emojiKeyBoardShow = false
       this.$refs.chatMain.style.height = `${this.clientHeight - 130}px`
       this.messageCurrent = ''
-      this.getFriendMessages()
+      // this.getFriendMessages()
     },
+    // 整理好友消息
+    makeFriendMessages (friendId) {
+      if (!this.messagesMap.get(friendId)) {
+        let messages = []
+        this.friendMessagesAll.forEach(item => {
+          let temp = {}
+          if (friendId === item.friendId) {
+            if (item.from === this.user.id) {
+              // 自己发送的消息
+              temp.img = this.user.avatar
+              temp.user = this.user.name
+              temp.mine = true
+            } else {
+              // 好友发送的消息
+              temp.img = this.friendMap.get(item.friendId).avatar
+              temp.user = this.friendMap.get(item.friendId).username
+              temp.mine = false
+            }
+            temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
+            temp.msg = item.content
+            messages.push(temp)
+          }
+        })
+        this.messagesMap.set(friendId, messages)
+        this.messages = messages
+      } else {
+        this.messages = this.messagesMap.get(friendId)
+      }
+    },
+    // 聊天对话框打开
     chatPopupOpen (friendId) {
       this.show = true
       this.friend = this.friendMap.get(friendId)
-      this.messages = []
-      this.friendMessagesAll.forEach(item => {
-        let temp = {}
-        if (this.friend.friendId === item.friendId) {
-          if (item.from === this.user.id) {
-            // 自己发送的消息
-            temp.img = this.user.avatar
-            temp.user = this.user.name
-            temp.mine = true
-          } else {
-            // 好友发送的消息
-            temp.img = this.friendMap.get(item.friendId).avatar
-            temp.user = this.friendMap.get(item.friendId).username
-            temp.mine = false
-          }
-          temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
-          temp.msg = item.content
-          this.messages.push(temp)
-        }
-      })
+      this.makeFriendMessages(friendId)
     },
+    // 发送消息
     sendMessage () {
       if (!this.messageCurrent) {
         return
@@ -211,8 +248,22 @@ export default {
       temp.mine = true
       temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
       temp.msg = this.messageCurrent
-      this.messages.push(temp)
+      this.messagesMap.get(packet['to']).push(temp)
       this.messageCurrent = ''
+
+      let sendTrim = {}
+      sendTrim.from = packet['from']
+      sendTrim.to = packet['to']
+      sendTrim.content = packet['content']
+      sendTrim.createTime = packet['createTime']
+      sendTrim.userId = packet['from']
+      sendTrim.friendId = packet['to']
+      this.friendMessagesAll.push(sendTrim)
+      this.friendMessages.forEach((item, index) => {
+        if (item.friendId === sendTrim.friendId) {
+          this.$set(this.friendMessages, index, sendTrim)
+        }
+      })
     },
     // 输入框获得焦点
     onFocusHandler () {
@@ -225,6 +276,7 @@ export default {
     onBlurHandler () {
       console.log('onBlurHandler')
     },
+    // 从后台获取历史消息
     getFriendMessages () {
       this.friendMessages = []
       GetFriendMessages().then(res => {
@@ -246,15 +298,18 @@ export default {
         })
       })
     },
+    // 获取所有同志
     getAllFriendNotify () {
       GetAllFriendNotify().then(res => {
         this.friendNotifies = res.data
         console.log(this.friendNotifies)
       })
     },
+    // 将时间格式化成人能看懂的
     formatDateHuman (date) {
       return util.formatDateHuman(date)
     },
+    // 同意添加好友
     agree (item) {
       this.$dialog.confirm({
         title: '标题',
@@ -271,6 +326,7 @@ export default {
         // on cancel
       });
     },
+    // 拒绝添加好友
     refuse (item) {
       this.$dialog.confirm({
         title: '标题',
@@ -298,6 +354,7 @@ export default {
         })
       }
     },
+    // emoji键盘开启关闭
     emojiKeyBoard () {
       if (this.emojiKeyBoardShow) {
         const $chatMain = this.$refs.chatMain
@@ -312,6 +369,7 @@ export default {
         }, 300)
       }
     },
+    // 选中emoji调用
     emojiSelect (emoji_) {
       ParseToHtmlDecimal({
         aliase: emoji_
@@ -319,6 +377,9 @@ export default {
         this.messageCurrent = `${this.messageCurrent + res.data}`
       })
       // '😂😂😂'
+    },
+    onSelect () {
+
     }
   },
   computed: {
@@ -329,6 +390,14 @@ export default {
     ]),
     createTime () {
       return this.socket.receive.createTime
+    },
+    addActionSheetShow: {
+      get () {
+        return this.$store.getters.addActionSheetShow
+      },
+      set (val) {
+        this.$store.commit('toggleAddActionSheetShow', val)
+      }
     }
   },
   watch: {
@@ -343,36 +412,40 @@ export default {
     this.getFriendMessages()
     this.getAllFriendNotify()
     // const friendId = this.$route.query.id
+    // 开启websocket监听器
     this.$options.sockets.onmessage = (data) => {
-      if (!this.show) {
-        this.friendMessages = []
-        GetFriendMessages().then(res => {
-          let temp = new Map()
-          this.friendMessagesAll = res.data
-          this.friendMessagesAll.forEach(item => {
-            const friendId = item.friendId
-            const friend = temp.get(friendId);
-            if (!friend) {
-              temp.set(friendId, item)
-            } else {
-              if (item.createTime >= friend.createTime) {
-                temp.set(friendId, item)
-              }
-            }
-          })
-          temp.forEach((value, key) => {
-            this.friendMessages.push(value)
-          })
-        })
-      }
       const receive = JSON.parse(data.data)
+      let receiveTrim = {}
+      receiveTrim.from = receive.from
+      receiveTrim.to = receive.to
+      receiveTrim.content = receive.content
+      receiveTrim.createTime = receive.createTime
+      receiveTrim.userId = receive.to
+      receiveTrim.friendId = receive.from
+      this.friendMessagesAll.push(receiveTrim)
+      let friendIndex = null
+      this.friendMessages.forEach((item, index) => {
+        if (item.friendId === receiveTrim.friendId) {
+          friendIndex = index
+        }
+      })
+      if (friendIndex !== null) {
+        this.$set(this.friendMessages, friendIndex, receiveTrim)
+      } else {
+        this.friendMessages.push(receiveTrim)
+      }
       let temp = {}
       temp.img = this.friendMap.get(receive.from).avatar
       temp.user = this.friendMap.get(receive.from).username
       temp.mine = false
       temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
       temp.msg = receive.content
-      this.messages.push(temp)
+      let messages_ = this.messagesMap.get(receiveTrim.friendId)
+      if (!messages_) {
+        this.makeFriendMessages(receiveTrim.friendId)
+      } else {
+        messages_.push(temp)
+      }
     }
   },
   created () {
@@ -380,13 +453,14 @@ export default {
     window.addEventListener('resize', () => {
       this.clientHeight = `${document.documentElement.clientHeight}`
     })
+    this.$on('addActionsheetOpen', function () {
+      console.log('addActionsheetOpen');
+    });
   }
 }
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
-  /*@import "../styles/layui/layui.css";*/
-  /*@import "../styles/layui/layim.css";*/
 
   .layim-chat-footer-keyboard-up {
     position: fixed;
@@ -460,5 +534,11 @@ export default {
     }
     .layim-msgbox .layui-btn-small{padding: 0 15px; margin-left: 5px;}
     .layim-msgbox-btn{position: absolute; right: 0; top: 20px; color: #999;}
+  }
+  .emoji-key-board-show {
+    font-weight: bold;
+  }
+  .emoji-key-board-hide {
+    font-weight: normal;
   }
 </style>

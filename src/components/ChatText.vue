@@ -1,5 +1,5 @@
 <template>
-  <div ref="msgContent"></div>
+  <div v-html="msgContent"></div>
 </template>
 
 <script>
@@ -22,7 +22,6 @@ export default {
         return emojiConvert(s)
       })
       this.msgContent = newData
-      this.$refs.msgContent.innerHTML = newData
     }
   },
   mounted () {

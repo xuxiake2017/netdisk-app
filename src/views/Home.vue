@@ -38,6 +38,7 @@
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
       <img :src="user.avatar" class="avatar-top" slot="left"/>
       <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
+      <van-icon v-else-if="$route.name === 'chat'" name="add-o" slot="right" :size="'20px'"/>
       <van-icon v-else name="home-o" slot="right" :size="'20px'"/>
     </van-nav-bar>
     <router-view></router-view>
@@ -94,6 +95,14 @@ export default {
         this.$store.commit('toggleUploadPopup', val)
       }
     },
+    addActionSheetShow: {
+      get () {
+        return this.$store.getters.addActionSheetShow
+      },
+      set (val) {
+        this.$store.commit('toggleAddActionSheetShow', val)
+      }
+    },
     percentage: {
       get () {
         const totalMemory = this.user.totalMemory
@@ -111,17 +120,25 @@ export default {
   watch: {
     // 监测是否收到新消息（以时间戳判断）
     'createTime': function () {
-      const routeName = this.$route.name
-      if (routeName !== 'chat') {
-        this.friendMessagePopupShow = true
-        this.friendMessage.friendId = this.receive.from
-        this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
-        this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
-        this.friendMessage.content = this.receive.content
-        window.setTimeout(() => {
-          this.friendMessagePopupShow = false
-        }, 3000)
-      }
+      // const routeName = this.$route.name
+      // if (routeName !== 'chat') {
+      //   this.friendMessagePopupShow = true
+      //   this.friendMessage.friendId = this.receive.from
+      //   this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
+      //   this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
+      //   this.friendMessage.content = this.receive.content
+      //   window.setTimeout(() => {
+      //     this.friendMessagePopupShow = false
+      //   }, 3000)
+      // }
+      this.friendMessagePopupShow = true
+      this.friendMessage.friendId = this.receive.from
+      this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
+      this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
+      this.friendMessage.content = this.receive.content
+      window.setTimeout(() => {
+        this.friendMessagePopupShow = false
+      }, 3000)
     }
   },
   methods: {
@@ -151,6 +168,9 @@ export default {
       switch (this.$route.name) {
         case 'fileList':
           this.uploadPopupShow = true
+          break
+        case 'chat':
+          this.addActionSheetShow = true
           break
         default:
           this.$router.push({ path: '/fileList' })

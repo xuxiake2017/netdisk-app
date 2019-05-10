@@ -4,6 +4,7 @@ import FileList from './modules/fileList'
 import User from './modules/user'
 import Home from './modules/home'
 import App from './modules/app'
+import Chat from './modules/chat'
 import Websocket from './modules/websocket'
 
 Vue.use(Vuex)
@@ -14,6 +15,7 @@ export default new Vuex.Store({
     Home,
     FileList,
     App,
-    Websocket
+    Websocket,
+    Chat
   }
 })
