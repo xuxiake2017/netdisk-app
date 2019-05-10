@@ -10,10 +10,11 @@ export default {
   created () {
     this.clientHeight = `${document.documentElement.clientHeight}`
     this.clientWidth = `${document.documentElement.clientWidth}`
-    window.addEventListener('resize', () => {
-      this.clientHeight = `${document.documentElement.clientHeight}`
-      this.clientWidth = `${document.documentElement.clientWidth}`
-    })
+    // 暂时不用动态改变
+    // window.addEventListener('resize', () => {
+    //   this.clientHeight = `${document.documentElement.clientHeight}`
+    //   this.clientWidth = `${document.documentElement.clientWidth}`
+    // })
   },
   computed: {
     clientHeight: {

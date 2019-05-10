@@ -11,7 +11,7 @@ export default {
       state.user = user
     },
     delUser (state) {
-      state.user = null
+      // state.user = null
       removeToken()
     },
     clearMessages (state) {

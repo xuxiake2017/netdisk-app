@@ -133,7 +133,6 @@ import util from '@/utils/util'
 import { mapGetters } from 'vuex'
 import Emoji from '../components/Emoji'
 import ChatText from '../components/ChatText'
-// import { emojiConvert } from '../utils/emoji'
 import { ParseToHtmlDecimal } from '../api/emoji'
 export default {
   name: 'Chat',
@@ -144,6 +143,7 @@ export default {
   },
   data () {
     return {
+      clientHeight: '',
       active: 0,
       show: false,
       messageCurrent: '',
@@ -286,6 +286,18 @@ export default {
         // on cancel
       });
     },
+    // 聊天界面滚动到最底部
+    chatUIScrollBottom () {
+      if (this.show) {
+        this.$nextTick(() => {
+          const chatMain = this.$refs.chatMain
+          const scrollHeight = chatMain.scrollHeight
+          if (scrollHeight > 0) {
+            chatMain.scrollTop = scrollHeight
+          }
+        })
+      }
+    },
     emojiKeyBoard () {
       if (this.emojiKeyBoardShow) {
         const $chatMain = this.$refs.chatMain
@@ -296,6 +308,7 @@ export default {
         this.emojiKeyBoardShow = true
         window.setTimeout(() => {
           $chatMain.style.height = `${this.clientHeight - 130 - 160}px`
+          // this.chatUIScrollBottom()
         }, 300)
       }
     },
@@ -303,7 +316,6 @@ export default {
       ParseToHtmlDecimal({
         aliase: emoji_
       }).then(res => {
-        console.log(res.data)
         this.messageCurrent = `${this.messageCurrent + res.data}`
       })
       // '😂😂😂'
@@ -311,7 +323,6 @@ export default {
   },
   computed: {
     ...mapGetters([
-      'clientHeight',
       'friendMap',
       'user',
       'socket'
@@ -322,19 +333,11 @@ export default {
   },
   watch: {
     'createTime': function () {
-      console.log(this.socket)
+      // console.log(this.socket)
     }
   },
   updated () {
-    if (this.show) {
-      this.$nextTick(() => {
-        const chatMain = this.$refs.chatMain
-        const scrollHeight = chatMain.scrollHeight
-        if (scrollHeight > 0) {
-          chatMain.scrollTop = scrollHeight
-        }
-      })
-    }
+    this.chatUIScrollBottom()
   },
   mounted () {
     this.getFriendMessages()
@@ -371,6 +374,12 @@ export default {
       temp.msg = receive.content
       this.messages.push(temp)
     }
+  },
+  created () {
+    this.clientHeight = `${document.documentElement.clientHeight}`
+    window.addEventListener('resize', () => {
+      this.clientHeight = `${document.documentElement.clientHeight}`
+    })
   }
 }
 </script>

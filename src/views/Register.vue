@@ -71,7 +71,6 @@ export default {
       loading: false,
       icon: 'my-close-eye',
       type: 'password',
-      clientHeight: '',
       errorMessage: {
         email: '',
         password: '',
@@ -135,10 +134,13 @@ export default {
   },
   created () {
     this.changeCaptcha()
-    this.clientHeight = `${document.documentElement.clientHeight}`
-    window.addEventListener('resize', () => {
-      this.clientHeight = `${document.documentElement.clientHeight}`
-    })
+  },
+  computed: {
+    clientHeight: {
+      get () {
+        return this.$store.getters.clientHeight
+      }
+    }
   }
 }
 </script>
