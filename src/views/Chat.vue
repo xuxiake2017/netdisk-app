@@ -131,15 +131,15 @@ import { FriendApplyForOption } from '../api/friendApplyFor'
 import usermixin from '@/mixins/userInfo'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
-import emoji from './emoji'
-import ChatText from './ChatText'
+import Emoji from '../components/Emoji'
+import ChatText from '../components/ChatText'
 // import { emojiConvert } from '../utils/emoji'
 import { ParseToHtmlDecimal } from '../api/emoji'
 export default {
   name: 'Chat',
   mixins: [usermixin],
   components: {
-    emoji,
+    Emoji,
     ChatText
   },
   data () {

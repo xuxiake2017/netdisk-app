@@ -1,17 +1,16 @@
 import Vue from 'vue'
 import Router from 'vue-router'
-import Login from '@/components/Login'
-import Register from '@/components/Register'
-import FileList from '@/components/FileList'
-import Gallery from '@/components/Gallery'
-import Home from '@/components/Home'
-import AccessShareFile from '@/components/AccessShareFile'
-import NotFound from '@/components/404'
-import Verify from '@/components/Verify'
-import Message from '@/components/Message'
-import UserInfo from '@/components/UserInfo'
-import Chat from '@/components/Chat'
-import Emoji from '@/components/emoji'
+import Login from '@/views/Login'
+import Register from '@/views/Register'
+import FileList from '@/views/FileList'
+import Gallery from '@/views/Gallery'
+import Home from '@/views/Home'
+import AccessShareFile from '@/views/AccessShareFile'
+import NotFound from '@/views/404'
+import Verify from '@/views/Verify'
+import Message from '@/views/Message'
+import UserInfo from '@/views/UserInfo'
+import Chat from '@/views/Chat'
 import { getToken } from '@/utils/auth'
 import store from '../store'
 import { GetInfo } from '@/api/user'
@@ -100,15 +99,6 @@ const routes = [
           icon: 'user-o'
         },
         component: UserInfo
-      },
-      {
-        path: 'emoji',
-        name: 'emoji',
-        meta: {
-          title: 'Emoji',
-          icon: 'user-o'
-        },
-        component: Emoji
       }
     ]
   }
