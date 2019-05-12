@@ -4,8 +4,8 @@
     <div class="chat-message-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 0">
       <ul class="layui-layim-list layui-show">
         <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item.friendId)">
-          <img :src="friendMap.get(item.friendId).avatar"/>
-          <span>{{friendMap.get(item.friendId).username}}</span>
+          <img :src="item.friendAvatar"/>
+          <span>{{item.friendName}}</span>
           <p>{{item.content}}</p>
         </li>
       </ul>
@@ -120,6 +120,54 @@
       </div>
       <emoji style="position: absolute; bottom: 0" v-if="emojiKeyBoardShow" @select="emojiSelect"></emoji>
     </van-popup>
+    <van-popup
+      v-model="addFriendPopupShow"
+      class="add-friend-popup"
+      position="right">
+      <van-nav-bar
+        :title="addAction"
+        left-text="返回"
+        left-arrow
+        @click-left="addFriendPopupClose">
+      </van-nav-bar>
+      <el-input placeholder="用户名/手机/邮箱" class="input-with-select" size="medium" v-model="searchKey">
+        <i slot="suffix" class="el-input__icon el-icon-search" style="color: #1989fa;" @click="searchFriend"></i>
+      </el-input>
+      <div>
+        <ul class="layui-layim-list layui-show">
+          <li v-for="(item, index) in searchResult" :key="index" @click="openAddFriendConfirmDialog(item)">
+            <img :src="item.avatar"/>
+            <span>{{item.username}}</span>
+            <p>{{item.signature}}</p>
+          </li>
+        </ul>
+        <div class="layui-flow-more" v-if="searchAction && searchResult.length === 0">
+          <li class="layim-msgbox-tips">暂无更多</li>
+        </div>
+      </div>
+      <van-dialog
+        v-model="addFriendConfirmDialogShow"
+        title="添加好友"
+        show-cancel-button
+        class="add-friend-confirm-dialog"
+        :before-close="beforeCloseHandler"
+      >
+        <div id="" class="layui-layer-content">
+          <div class="layim-add-box">
+            <div class="layim-add-img">
+              <img class="layui-circle" :src="addApplyForData.avatar">
+              <p>{{addApplyForData.username}}</p>
+            </div>
+            <div class="layim-add-remark">
+              <van-field
+                v-model="addApplyForData.postscript"
+                label="验证信息"
+              />
+            </div>
+          </div>
+        </div>
+      </van-dialog>
+    </van-popup>
     <van-actionsheet
       v-model="addActionSheetShow"
       :actions="actions"
@@ -132,7 +180,7 @@
 // import { SendMessage } from '../api/tuling'
 import { GetFriendMessages } from '../api/friendMessage'
 import { GetAllFriendNotify } from '../api/friendNotify'
-import { FriendApplyForOption } from '../api/friendApplyFor'
+import { FriendApplyForOption, SearchFriend, AddFriendRequest } from '../api/friendApplyFor'
 import usermixin from '@/mixins/userInfo'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
@@ -180,7 +228,19 @@ export default {
         {
           name: '添加群'
         }
-      ]
+      ],
+      addFriendPopupShow: false,
+      addAction: '',
+      searchKey: '',
+      searchAction: false,
+      searchResult: [],
+      addFriendConfirmDialogShow: false,
+      addApplyForData: {
+        respondent: '',
+        username: '',
+        avatar: '',
+        postscript: ''
+      }
     }
   },
   methods: {
@@ -206,8 +266,8 @@ export default {
               temp.mine = true
             } else {
               // 好友发送的消息
-              temp.img = this.friendMap.get(item.friendId).avatar
-              temp.user = this.friendMap.get(item.friendId).username
+              temp.img = item.friendAvatar
+              temp.user = item.friendName
               temp.mine = false
             }
             temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
@@ -241,7 +301,19 @@ export default {
       packet['to'] = this.friend.friendId
       packet['content'] = this.messageCurrent
       packet['createTime'] = new Date().getTime()
-      this.$socket.send(JSON.stringify(packet))
+      // 接收消息的好友user与friend的位置会对调
+      packet['userId'] = this.friend.friendId
+      packet['userName'] = this.friend.username
+      packet['userAvatar'] = this.friend.avatar
+      packet['friendId'] = this.user.id
+      packet['friendName'] = this.user.name
+      packet['friendAvatar'] = this.user.avatar
+
+      let messageBase = {}
+      messageBase['type'] = 'FRIEND'
+      messageBase['content'] = packet
+      messageBase['createTime'] = new Date().getTime()
+      this.$socket.send(JSON.stringify(messageBase))
       let temp = {}
       temp.img = this.user.avatar
       temp.user = this.user.name
@@ -257,7 +329,11 @@ export default {
       sendTrim.content = packet['content']
       sendTrim.createTime = packet['createTime']
       sendTrim.userId = packet['from']
+      sendTrim.userName = packet['friendName']
+      sendTrim.userAvatar = packet['friendAvatar']
       sendTrim.friendId = packet['to']
+      sendTrim.friendName = packet['userName']
+      sendTrim.friendAvatar = packet['userAvatar']
       this.friendMessagesAll.push(sendTrim)
       this.friendMessages.forEach((item, index) => {
         if (item.friendId === sendTrim.friendId) {
@@ -378,8 +454,50 @@ export default {
       })
       // '😂😂😂'
     },
-    onSelect () {
-
+    onSelect (item, index) {
+      if (item.name === '添加好友') {
+        this.addAction = item.name
+        this.addFriendPopupShow = true
+        this.addActionSheetShow = false
+      }
+    },
+    addFriendPopupClose () {
+      this.addFriendPopupShow = false
+      this.searchKey = ''
+      this.searchAction = false
+      this.searchResult = []
+    },
+    searchFriend () {
+      if (!this.searchKey) {
+        return
+      }
+      SearchFriend({ key: this.searchKey }).then(res => {
+        this.searchAction = true
+        this.searchResult = res.data
+      })
+    },
+    openAddFriendConfirmDialog (item) {
+      this.addApplyForData.respondent = item.userId
+      this.addApplyForData.username = item.username
+      this.addApplyForData.avatar = item.avatar
+      this.addApplyForData.postscript = `我是${this.user.name}，申请添加好友`
+      this.addFriendConfirmDialogShow = true
+    },
+    sendAddFriednRequest (done) {
+      AddFriendRequest({ ...this.addApplyForData }).then(res => {
+        this.$toast('添加好友请求发送成功! ')
+        done()
+        this.getAllFriendNotify()
+      }).catch(res => {
+        done(false)
+      })
+    },
+    beforeCloseHandler (action, done) {
+      if (action === 'confirm') {
+        this.sendAddFriednRequest(done)
+      } else {
+        done()
+      }
     }
   },
   computed: {
@@ -415,36 +533,37 @@ export default {
     // 开启websocket监听器
     this.$options.sockets.onmessage = (data) => {
       const receive = JSON.parse(data.data)
-      let receiveTrim = {}
-      receiveTrim.from = receive.from
-      receiveTrim.to = receive.to
-      receiveTrim.content = receive.content
-      receiveTrim.createTime = receive.createTime
-      receiveTrim.userId = receive.to
-      receiveTrim.friendId = receive.from
-      this.friendMessagesAll.push(receiveTrim)
-      let friendIndex = null
-      this.friendMessages.forEach((item, index) => {
-        if (item.friendId === receiveTrim.friendId) {
-          friendIndex = index
+      const messageContent = receive['content']
+      if (receive['type'] === 'FRIEND') {
+        if (!this.friendMap || !this.friendMap.get(messageContent.friendId)) {
+          this.getInfo()
         }
-      })
-      if (friendIndex !== null) {
-        this.$set(this.friendMessages, friendIndex, receiveTrim)
-      } else {
-        this.friendMessages.push(receiveTrim)
-      }
-      let temp = {}
-      temp.img = this.friendMap.get(receive.from).avatar
-      temp.user = this.friendMap.get(receive.from).username
-      temp.mine = false
-      temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
-      temp.msg = receive.content
-      let messages_ = this.messagesMap.get(receiveTrim.friendId)
-      if (!messages_) {
-        this.makeFriendMessages(receiveTrim.friendId)
-      } else {
-        messages_.push(temp)
+        this.friendMessagesAll.push(messageContent)
+        let friendIndex = null
+        this.friendMessages.forEach((item, index) => {
+          if (item.friendId === messageContent.friendId) {
+            friendIndex = index
+          }
+        })
+        if (friendIndex !== null) {
+          this.$set(this.friendMessages, friendIndex, messageContent)
+        } else {
+          this.friendMessages.push(messageContent)
+        }
+        let temp = {}
+        temp.img = messageContent.friendAvatar
+        temp.user = messageContent.friendName
+        temp.mine = false
+        temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
+        temp.msg = messageContent.content
+        let messages_ = this.messagesMap.get(messageContent.friendId)
+        if (!messages_) {
+          this.makeFriendMessages(messageContent.friendId)
+        } else {
+          messages_.push(temp)
+        }
+      } else if (receive['type'] === 'FRIEND_APPLY_FOR') {
+        this.getAllFriendNotify()
       }
     }
   },
@@ -453,9 +572,6 @@ export default {
     window.addEventListener('resize', () => {
       this.clientHeight = `${document.documentElement.clientHeight}`
     })
-    this.$on('addActionsheetOpen', function () {
-      console.log('addActionsheetOpen');
-    });
   }
 }
 </script>
@@ -540,5 +656,18 @@ export default {
   }
   .emoji-key-board-hide {
     font-weight: normal;
+  }
+  .add-friend-popup {
+    height: 100%;
+    width: 100%;
+  }
+  .add-friend-confirm-dialog .layim-add-remark {
+    width: 100%;
+    display: block;
+    margin: 10px auto 0;
+  }
+  .add-friend-confirm-dialog .layim-add-img {
+    margin: 0 auto;
+    display: block;
   }
 </style>

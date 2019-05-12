@@ -132,10 +132,18 @@ export default {
       //   }, 3000)
       // }
       this.friendMessagePopupShow = true
-      this.friendMessage.friendId = this.receive.from
-      this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
-      this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
-      this.friendMessage.content = this.receive.content
+      const messageContent = this.receive.content
+      if (this.receive.type === 'FRIEND') {
+        this.friendMessage.friendId = messageContent.from
+        this.friendMessage.friendUsername = messageContent.friendName
+        this.friendMessage.friendAvatar = messageContent.friendAvatar
+        this.friendMessage.content = messageContent.content
+      } else if (this.receive.type === 'FRIEND_APPLY_FOR') {
+        this.friendMessage.friendId = messageContent.applicant
+        this.friendMessage.friendUsername = messageContent.applicantUsername
+        this.friendMessage.friendAvatar = messageContent.applicantAvatar
+        this.friendMessage.content = messageContent.postscript
+      }
       window.setTimeout(() => {
         this.friendMessagePopupShow = false
       }, 3000)
