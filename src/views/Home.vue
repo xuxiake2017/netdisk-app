@@ -32,7 +32,8 @@
     <van-popup v-model="friendMessagePopupShow" position="top" :overlay="false" class="friend-message-popup layui-layer-page layui-box layui-layim-min">
       <div id="" class="layui-layer-content" style="height: 40px;" @click="jumpToChat">
         <img id="layui-layim-min" :src="friendMessage.friendAvatar" style="cursor: move;">
-        <span>{{friendMessage.content}}</span>
+        <span v-if="friendMessage.content">{{friendMessage.content}}</span>
+        <span v-if="friendMessage.fileId">[文件]</span>
       </div>
     </van-popup>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
@@ -61,7 +62,8 @@ export default {
         content: '',
         friendId: null,
         friendUsername: '',
-        friendAvatar: ''
+        friendAvatar: '',
+        fileId: null
       }
     }
   },
@@ -138,6 +140,7 @@ export default {
         this.friendMessage.friendUsername = messageContent.friendName
         this.friendMessage.friendAvatar = messageContent.friendAvatar
         this.friendMessage.content = messageContent.content
+        this.friendMessage.fileId = messageContent.fileId
       } else if (this.receive.type === 'FRIEND_APPLY_FOR') {
         this.friendMessage.friendId = messageContent.applicant
         this.friendMessage.friendUsername = messageContent.applicantUsername

@@ -14,6 +14,7 @@ import 'element-ui/lib/theme-chalk/display.css'
 import './styles/layui/layui.css'
 import './styles/layui/layim.css'
 import './styles/layui/layer.css'
+import './styles/iconfont'
 import VueNativeSock from 'vue-native-websocket'
 import {
   SOCKET_ONOPEN,

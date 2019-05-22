@@ -77,7 +77,7 @@ const routes = [
         path: 'message',
         name: 'message',
         meta: {
-          title: '我的消息',
+          title: '系统消息',
           icon: 'envelop-o'
         },
         component: Message

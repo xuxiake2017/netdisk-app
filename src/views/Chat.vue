@@ -6,7 +6,8 @@
         <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item.friendId)">
           <img :src="item.friendAvatar"/>
           <span>{{item.friendName}}</span>
-          <p>{{item.content}}</p>
+          <p v-if="item.content">{{item.content}}</p>
+          <p v-if="item.fileId">[文件]</p>
         </li>
       </ul>
     </div>
@@ -68,7 +69,8 @@
     <van-popup
       v-model="show"
       class="chat-popup"
-      position="right">
+      position="right"
+      :fixed="true">
       <van-nav-bar
         v-if="friend"
         :title="friend.username"
@@ -89,7 +91,7 @@
               </div>
             </div>
             <div class="layim-chat-text">
-              <chat-text :msg="item.msg"></chat-text>
+              <chat-text :msg="item.msg" :file-id="item.fileId" @file-click="fileClick"></chat-text>
             </div>
           </li>
         </ul>
@@ -112,9 +114,7 @@
           <span class="layui-icon layim-tool-image" title="上传图片">
             <input type="file" name="file">
           </span>
-          <span class="layui-icon layim-tool-image" title="发送文件" data-type="file">
-            <input type="file" name="file">
-          </span>
+          <span class="layui-icon layim-tool-image" title="发送文件" @click="chatFileListPopupOpen"></span>
           <span class="layim-tool-log"><i class="layui-icon"></i>聊天记录</span>
         </div>
       </div>
@@ -173,6 +173,20 @@
       :actions="actions"
       @select="onSelect"
     />
+    <van-popup
+      v-model="chatFileListPopup"
+      class="chat-file-list-popup"
+      position="bottom">
+      <chat-file-list
+        @chat-file-list-popup-close="chatFileListPopupClose"
+        @select-file="selectFileSend">
+      </chat-file-list>
+    </van-popup>
+    <media-preview
+      :show="mediaPopupShow"
+      :mediaFile="mediaFile"
+      @media-popup-close="mediaPopupClose">
+    </media-preview>
   </div>
 </template>
 
@@ -182,17 +196,20 @@ import { GetFriendMessages } from '../api/friendMessage'
 import { GetAllFriendNotify } from '../api/friendNotify'
 import { FriendApplyForOption, SearchFriend, AddFriendRequest } from '../api/friendApplyFor'
 import usermixin from '@/mixins/userInfo'
+import mediaPreview from '@/mixins/mediaPreview'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
 import Emoji from '../components/Emoji'
 import ChatText from '../components/ChatText'
+import ChatFileList from '../components/ChatFileList'
 import { ParseToHtmlDecimal } from '../api/emoji'
 export default {
   name: 'Chat',
-  mixins: [usermixin],
+  mixins: [usermixin, mediaPreview],
   components: {
     Emoji,
-    ChatText
+    ChatText,
+    ChatFileList
   },
   data () {
     return {
@@ -240,7 +257,8 @@ export default {
         username: '',
         avatar: '',
         postscript: ''
-      }
+      },
+      chatFileListPopup: false
     }
   },
   methods: {
@@ -251,6 +269,7 @@ export default {
       this.$refs.chatMain.style.height = `${this.clientHeight - 130}px`
       this.messageCurrent = ''
       // this.getFriendMessages()
+      this.messages = []
     },
     // 整理好友消息
     makeFriendMessages (friendId) {
@@ -261,8 +280,8 @@ export default {
           if (friendId === item.friendId) {
             if (item.from === this.user.id) {
               // 自己发送的消息
-              temp.img = this.user.avatar
-              temp.user = this.user.name
+              temp.img = item.userAvatar
+              temp.user = item.userName
               temp.mine = true
             } else {
               // 好友发送的消息
@@ -272,6 +291,7 @@ export default {
             }
             temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
             temp.msg = item.content
+            temp.fileId = item.fileId
             messages.push(temp)
           }
         })
@@ -279,6 +299,7 @@ export default {
         this.messages = messages
       } else {
         this.messages = this.messagesMap.get(friendId)
+        // Object.assign(this.messages, this.messagesMap.get(friendId))
       }
     },
     // 聊天对话框打开
@@ -296,10 +317,18 @@ export default {
         this.$toast('websocket连接断开，请刷新页面!')
         return
       }
+      this.messagePackagingAndSend(this.messageCurrent)
+    },
+    // 消息打包以及发送
+    messagePackagingAndSend (msg, fileId) {
       let packet = {}
       packet['from'] = this.user.id
       packet['to'] = this.friend.friendId
-      packet['content'] = this.messageCurrent
+      if (msg) {
+        packet['content'] = msg
+      } else if (fileId) {
+        packet['fileId'] = fileId
+      }
       packet['createTime'] = new Date().getTime()
       // 接收消息的好友user与friend的位置会对调
       packet['userId'] = this.friend.friendId
@@ -319,13 +348,15 @@ export default {
       temp.user = this.user.name
       temp.mine = true
       temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
-      temp.msg = this.messageCurrent
+      temp.msg = msg
+      temp.fileId = fileId
       this.messagesMap.get(packet['to']).push(temp)
       this.messageCurrent = ''
 
       let sendTrim = {}
       sendTrim.from = packet['from']
       sendTrim.to = packet['to']
+      sendTrim.fileId = packet['fileId']
       sendTrim.content = packet['content']
       sendTrim.createTime = packet['createTime']
       sendTrim.userId = packet['from']
@@ -374,7 +405,7 @@ export default {
         })
       })
     },
-    // 获取所有同志
+    // 获取所有通知
     getAllFriendNotify () {
       GetAllFriendNotify().then(res => {
         this.friendNotifies = res.data
@@ -498,6 +529,40 @@ export default {
       } else {
         done()
       }
+    },
+    chatFileListPopupOpen () {
+      this.chatFileListPopup = true
+    },
+    chatFileListPopupClose () {
+      this.chatFileListPopup = false
+    },
+    selectFileSend (item) {
+      console.log(item)
+      this.messagePackagingAndSend(null, item.id)
+      this.chatFileListPopup = false
+    },
+    fileClick (file) {
+      const fileType = file.fileType
+      switch (fileType) {
+        case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
+          this.imagePreview(file)
+          break
+        case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
+          this.mediaPreview(file)
+          break
+        case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
+          this.mediaPreview(file)
+          break
+        default:
+          this.$dialog.confirm({
+            title: '提示',
+            message: `确认下载该文件？`
+          }).then(res => {
+            window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${this.file.fileSaveName}`, '_blank');
+          }).catch(res => {
+            // 取消
+          })
+      }
     }
   },
   computed: {
@@ -556,6 +621,7 @@ export default {
         temp.mine = false
         temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
         temp.msg = messageContent.content
+        temp.fileId = messageContent.fileId
         let messages_ = this.messagesMap.get(messageContent.friendId)
         if (!messages_) {
           this.makeFriendMessages(messageContent.friendId)
@@ -669,5 +735,9 @@ export default {
   .add-friend-confirm-dialog .layim-add-img {
     margin: 0 auto;
     display: block;
+  }
+  .chat-file-list-popup {
+    height: 50%;
+    width: 100%;
   }
 </style>
