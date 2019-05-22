@@ -558,7 +558,7 @@ export default {
             title: '提示',
             message: `确认下载该文件？`
           }).then(res => {
-            window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${this.file.fileSaveName}`, '_blank');
+            window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${file.fileSaveName}`, '_blank');
           }).catch(res => {
             // 取消
           })
