@@ -2,14 +2,16 @@
   <div class="chat">
     <!--消息列表-->
     <div class="chat-message-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 0">
-      <ul class="layui-layim-list layui-show">
-        <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item.friendId)">
-          <img :src="item.friendAvatar"/>
-          <span>{{item.friendName}}</span>
-          <p v-if="item.content">{{item.content}}</p>
-          <p v-if="item.fileId">[文件]</p>
-        </li>
-      </ul>
+      <van-pull-refresh v-model="isLoadingMessage" @refresh="onRefresh" :style="{'height': `${clientHeight - 100}px`}">
+        <ul class="layui-layim-list layui-show">
+          <li v-for="(item, index) in friendMessages" :key="index" @click="chatPopupOpen(item.friendId)">
+            <img :src="item.friendAvatar"/>
+            <span>{{item.friendName}}</span>
+            <p v-if="item.content">{{item.content}}</p>
+            <p v-if="item.fileId">[文件]</p>
+          </li>
+        </ul>
+      </van-pull-refresh>
     </div>
     <!--好友列表-->
     <div class="chat-frient-list" :style="{'height': `${clientHeight - 100}px`}" v-if="active === 1">
@@ -23,40 +25,42 @@
     </div>
     <!--通知-->
     <div :style="{'height': `${clientHeight - 100}px`}" v-if="active === 2" class="chat-frient-notify">
-      <ul class="layim-msgbox">
-        <li v-for="(item, index) in friendNotifies" :key="index" :class="{'layim-msgbox-system': item.content.respondent !== user.id}">
-          <div v-if="item.content.respondent === user.id">
-            <a>
-              <img :src="item.content.applicantAvatar" class="layui-circle layim-msgbox-avatar">
-            </a>
-            <p class="layim-msgbox-user"><a>{{item.content.applicantUsername}}</a> <span>{{formatDateHuman(item.content.createTime)}}</span></p>
-            <p class="layim-msgbox-content"> 申请添加你为好友</p>
-            <p class="msgbox-postscript">附言: {{item.content.postscript}}</p>
-            <p class="layim-msgbox-btn">
+      <van-pull-refresh v-model="isLoadingNotify" @refresh="onRefresh" :style="{'height': `${clientHeight - 100}px`}">
+        <ul class="layim-msgbox">
+          <li v-for="(item, index) in friendNotifies" :key="index" :class="{'layim-msgbox-system': item.content.respondent !== user.id}">
+            <div v-if="item.content.respondent === user.id">
+              <a>
+                <img :src="item.content.applicantAvatar" class="layui-circle layim-msgbox-avatar">
+              </a>
+              <p class="layim-msgbox-user"><a>{{item.content.applicantUsername}}</a> <span>{{formatDateHuman(item.content.createTime)}}</span></p>
+              <p class="layim-msgbox-content"> 申请添加你为好友</p>
+              <p class="msgbox-postscript">附言: {{item.content.postscript}}</p>
+              <p class="layim-msgbox-btn">
               <span v-if="item.content.verify === 0">
                 <van-button size="small" type="primary" @click="agree(item)">同意</van-button>
                 <van-button size="small" plain type="primary" @click="refuse(item)">拒绝</van-button>
               </span>
-              <span v-if="item.content.verify === 1">
+                <span v-if="item.content.verify === 1">
                 已同意
               </span>
-              <span v-if="item.content.verify === 2">
+                <span v-if="item.content.verify === 2">
                 已拒绝
               </span>
-            </p>
-          </div>
-          <div v-if="item.content.applicant === user.id">
-            <p v-if="item.content.verify === 0">
-              <em>系统：</em>你向{{item.content.respondentUsername}}的好友申请待验证
-              <span>{{formatDateHuman(item.content.createTime)}}</span>
-            </p>
-            <p v-else>
-              <em>系统：</em>{{item.content.respondentUsername}} {{applyVerify[item.content.verify]}}了你的好友申请
-              <span>{{formatDateHuman(item.content.createTime)}}</span>
-            </p>
-          </div>
-        </li>
-      </ul>
+              </p>
+            </div>
+            <div v-if="item.content.applicant === user.id">
+              <p v-if="item.content.verify === 0">
+                <em>系统：</em>你向{{item.content.respondentUsername}}的好友申请待验证
+                <span>{{formatDateHuman(item.content.createTime)}}</span>
+              </p>
+              <p v-else>
+                <em>系统：</em>{{item.content.respondentUsername}} {{applyVerify[item.content.verify]}}了你的好友申请
+                <span>{{formatDateHuman(item.content.createTime)}}</span>
+              </p>
+            </div>
+          </li>
+        </ul>
+      </van-pull-refresh>
       <div class="layui-flow-more" v-if="friendNotifies.length === 0">
         <li class="layim-msgbox-tips">暂无更多新消息</li>
       </div>
@@ -78,23 +82,25 @@
         left-arrow
         @click-left="chatPopupClose">
       </van-nav-bar>
-      <div class="layim-chat-main" :style="{'height': `${clientHeight - 130}px`}" ref="chatMain">
-        <ul>
-          <li v-for="(item, index) in messages" :key="index" :class="{ 'layim-chat-mine': item.mine }">
-            <div class="layim-chat-user">
-              <img :src="item.img">
-              <div v-if="item.mine">
-                <cite><i>{{item.date}}</i>{{item.user}}</cite>
+      <div class="layim-chat-main" :style="{'height': `${clientHeight - 130}px`}" ref="chatMain" @scroll="onScrollHandler">
+        <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
+          <ul>
+            <li v-for="item in messages" :key="item.id" :class="{ 'layim-chat-mine': item.mine }">
+              <div class="layim-chat-user">
+                <img :src="item.img">
+                <div v-if="item.mine">
+                  <cite><i>{{item.date}}</i>{{item.user}}</cite>
+                </div>
+                <div v-else>
+                  <cite>{{item.user}}<i>{{item.date}}</i></cite>
+                </div>
               </div>
-              <div v-else>
-                <cite>{{item.user}}<i>{{item.date}}</i></cite>
+              <div class="layim-chat-text">
+                <chat-text :msg="item.msg" :file-id="item.fileId" @file-click="fileClick"></chat-text>
               </div>
-            </div>
-            <div class="layim-chat-text">
-              <chat-text :msg="item.msg" :file-id="item.fileId" @file-click="fileClick"></chat-text>
-            </div>
-          </li>
-        </ul>
+            </li>
+          </ul>
+        </van-pull-refresh>
       </div>
       <div class="layim-chat-footer" ref="chatFooter" :class="{'layim-chat-footer-keyboard-up': emojiKeyBoardShow, 'layim-chat-footer-keyboard-down': !emojiKeyBoardShow}">
         <!--<div class="layim-chat-textarea"><textarea></textarea></div>-->
@@ -119,6 +125,10 @@
         </div>
       </div>
       <emoji style="position: absolute; bottom: 0" v-if="emojiKeyBoardShow" @select="emojiSelect"></emoji>
+      <!--回到聊天界面底部按钮-->
+      <div class="to-chat-bottom-btn" @click="chatUIScrollBottom" v-if="toBottomFlag">
+        <van-icon name="arrow-down" :size="'25px'"/>
+      </div>
     </van-popup>
     <van-popup
       v-model="addFriendPopupShow"
@@ -221,8 +231,11 @@ export default {
       messageCurrent: '',
       // 存放与单个好友的消息
       messagesMap: new Map(),
+      // 存放分页信息
+      paginationMap: new Map(),
       // 当前聊天页面的好友消息
       messages: [],
+      pagination: null,
       // 与好友的消息列表（包含一条最新的消息）
       friendMessages: [],
       // 当前对话的好友
@@ -246,19 +259,35 @@ export default {
           name: '添加群'
         }
       ],
+      // 添加好友对话框标记
       addFriendPopupShow: false,
+      // 上拉框动作
       addAction: '',
+      // 好友搜索的关键字
       searchKey: '',
+      // 搜索动作
       searchAction: false,
+      // 搜索结果
       searchResult: [],
+      // 添加好友确认对话框标记
       addFriendConfirmDialogShow: false,
+      // 添加好友请求数据
       addApplyForData: {
         respondent: '',
         username: '',
         avatar: '',
         postscript: ''
       },
-      chatFileListPopup: false
+      // 文件选择弹框标记
+      chatFileListPopup: false,
+      // 是否正在刷新标记（消息列表）
+      isLoadingMessage: false,
+      // 是否正在刷新标记（通知列表）
+      isLoadingNotify: false,
+      // 是否正在刷新标记（聊天对话消息列表）
+      isLoading: false,
+      // 是否显示到底部按钮标记
+      toBottomFlag: false
     }
   },
   methods: {
@@ -273,6 +302,7 @@ export default {
     },
     // 整理好友消息
     makeFriendMessages (friendId) {
+      // 获取消息
       if (!this.messagesMap.get(friendId)) {
         let messages = []
         this.friendMessagesAll.forEach(item => {
@@ -292,6 +322,7 @@ export default {
             temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
             temp.msg = item.content
             temp.fileId = item.fileId
+            temp.id = item.id
             messages.push(temp)
           }
         })
@@ -301,12 +332,21 @@ export default {
         this.messages = this.messagesMap.get(friendId)
         // Object.assign(this.messages, this.messagesMap.get(friendId))
       }
+      // 获取分页
+      if (!this.paginationMap.get(friendId)) {
+        let temp = {}
+        temp['pageNum'] = 1
+        temp['pageSize'] = 100
+        this.paginationMap.set(friendId, temp)
+      }
+      this.pagination = this.paginationMap.get(friendId)
     },
     // 聊天对话框打开
     chatPopupOpen (friendId) {
       this.show = true
       this.friend = this.friendMap.get(friendId)
       this.makeFriendMessages(friendId)
+      this.chatUIScrollBottom()
     },
     // 发送消息
     sendMessage () {
@@ -350,6 +390,7 @@ export default {
       temp.date = util.formatDate.format(new Date(), 'yyyy-MM-dd hh:mm:ss')
       temp.msg = msg
       temp.fileId = fileId
+      temp.id = this.guid()
       this.messagesMap.get(packet['to']).push(temp)
       this.messageCurrent = ''
 
@@ -385,7 +426,7 @@ export default {
     },
     // 从后台获取历史消息
     getFriendMessages () {
-      this.friendMessages = []
+      this.friendMessages.splice(0)
       GetFriendMessages().then(res => {
         let temp = new Map()
         this.friendMessagesAll = res.data
@@ -409,7 +450,6 @@ export default {
     getAllFriendNotify () {
       GetAllFriendNotify().then(res => {
         this.friendNotifies = res.data
-        console.log(this.friendNotifies)
       })
     },
     // 将时间格式化成人能看懂的
@@ -485,6 +525,7 @@ export default {
       })
       // '😂😂😂'
     },
+    // 上拉框选择
     onSelect (item, index) {
       if (item.name === '添加好友') {
         this.addAction = item.name
@@ -492,12 +533,14 @@ export default {
         this.addActionSheetShow = false
       }
     },
+    // 添加好友弹出层关闭
     addFriendPopupClose () {
       this.addFriendPopupShow = false
       this.searchKey = ''
       this.searchAction = false
       this.searchResult = []
     },
+    // 搜索好友
     searchFriend () {
       if (!this.searchKey) {
         return
@@ -507,6 +550,7 @@ export default {
         this.searchResult = res.data
       })
     },
+    // 打开添加好友确认对话框
     openAddFriendConfirmDialog (item) {
       this.addApplyForData.respondent = item.userId
       this.addApplyForData.username = item.username
@@ -514,6 +558,7 @@ export default {
       this.addApplyForData.postscript = `我是${this.user.name}，申请添加好友`
       this.addFriendConfirmDialogShow = true
     },
+    // 发送添加好友请求
     sendAddFriednRequest (done) {
       AddFriendRequest({ ...this.addApplyForData }).then(res => {
         this.$toast('添加好友请求发送成功! ')
@@ -523,6 +568,7 @@ export default {
         done(false)
       })
     },
+    // 添加好友确认对话框关闭
     beforeCloseHandler (action, done) {
       if (action === 'confirm') {
         this.sendAddFriednRequest(done)
@@ -530,17 +576,21 @@ export default {
         done()
       }
     },
+    // 文件列表对话框打开
     chatFileListPopupOpen () {
       this.chatFileListPopup = true
     },
+    // 文件列表对话框关闭
     chatFileListPopupClose () {
       this.chatFileListPopup = false
     },
+    // 选择要发送的文件
     selectFileSend (item) {
       console.log(item)
       this.messagePackagingAndSend(null, item.id)
       this.chatFileListPopup = false
     },
+    // 点击已经发送的文件进行预览或者下载
     fileClick (file) {
       const fileType = file.fileType
       switch (fileType) {
@@ -563,6 +613,80 @@ export default {
             // 取消
           })
       }
+    },
+    // 下拉刷新
+    onRefresh () {
+      window.setTimeout(() => {
+        if (this.show) {
+          let messages = this.messagesMap.get(this.friend.friendId)
+          this.pagination.pageNum++
+          GetFriendMessages({
+            pageNum: this.pagination.pageNum,
+            pageSize: this.pagination.pageSize,
+            friendId: this.friend.friendId
+          }).then(res => {
+            const chatMain = this.$refs.chatMain
+            const scrollHeightOld = chatMain.scrollHeight
+            let array = []
+            res.data.list.forEach(item => {
+              let temp = {}
+              if (item.from === this.user.id) {
+                // 自己发送的消息
+                temp.img = item.userAvatar
+                temp.user = item.userName
+                temp.mine = true
+              } else {
+                // 好友发送的消息
+                temp.img = item.friendAvatar
+                temp.user = item.friendName
+                temp.mine = false
+              }
+              temp.date = util.formatDate.format(new Date(item.createTime), 'yyyy-MM-dd hh:mm:ss')
+              temp.msg = item.content
+              temp.fileId = item.fileId
+              temp.id = item.id
+              array.push(temp)
+            })
+            messages.splice(0, 0, ...array)
+            this.isLoading = false
+            window.setTimeout(() => {
+              const scrollHeightNew = chatMain.scrollHeight
+              chatMain.scrollTop = scrollHeightNew - scrollHeightOld
+            }, 200)
+          })
+        } else {
+          if (this.active === 0) {
+            this.getFriendMessages()
+            this.messagesMap.clear()
+            this.isLoadingMessage = false
+          } else if (this.active === 2) {
+            this.getAllFriendNotify()
+            this.isLoadingNotify = false
+          }
+        }
+      }, 500)
+    },
+    // 聊天页面滚动事件处理
+    onScrollHandler () {
+      const chatMain = this.$refs.chatMain
+      const scrollHeight = chatMain.scrollHeight
+      const scrollTop = chatMain.scrollTop
+      const clientHeight = chatMain.clientHeight
+      // console.log('scrollHeight: ' + scrollHeight)
+      // console.log('scrollTop: ' + scrollTop)
+      // console.log('clientHeight: ' + clientHeight)
+      if (scrollHeight >= clientHeight + scrollTop + 100) {
+        this.toBottomFlag = true
+      } else {
+        this.toBottomFlag = false
+      }
+    },
+    // 用于生成uuid
+    S4 () {
+      return (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+    },
+    guid () {
+      return (this.S4() + this.S4() + '-' + this.S4() + '-' + this.S4() + '-' + this.S4() + '-' + this.S4() + this.S4() + this.S4());
     }
   },
   computed: {
@@ -589,7 +713,7 @@ export default {
     }
   },
   updated () {
-    this.chatUIScrollBottom()
+    // this.chatUIScrollBottom()
   },
   mounted () {
     this.getFriendMessages()
@@ -627,6 +751,9 @@ export default {
           this.makeFriendMessages(messageContent.friendId)
         } else {
           messages_.push(temp)
+        }
+        if (!this.toBottomFlag) {
+          this.chatUIScrollBottom()
         }
       } else if (receive['type'] === 'FRIEND_APPLY_FOR') {
         this.getAllFriendNotify()
@@ -739,5 +866,10 @@ export default {
   .chat-file-list-popup {
     height: 50%;
     width: 100%;
+  }
+  .to-chat-bottom-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 15px;
   }
 </style>
