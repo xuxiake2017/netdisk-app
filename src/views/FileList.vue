@@ -72,6 +72,9 @@
             <van-button size="mini" type="default" @click="mvFileHandler(item, index)">移动</van-button>
             <van-button size="mini" type="info" @click="shareFileHandler(item, index)">分享</van-button>
           </van-row>
+          <van-row style="margin-top: 12px" v-if="item.downloadProgressFlag">
+            <van-progress :percentage="item.downloadPercent" />
+          </van-row>
         </van-collapse-item>
       </van-collapse>
     </van-list>
@@ -160,6 +163,7 @@ import usermixin from '@/mixins/userInfo'
 import mediaPreview from '@/mixins/mediaPreview'
 import { mapGetters } from 'vuex'
 import ClipBoard from 'clipboard'
+import { getToken } from '@/utils/auth'
 export default {
   name: 'FileList',
   mixins: [usermixin, mediaPreview],
@@ -249,6 +253,11 @@ export default {
       GetFileList({ ...this.filters, ...this.pagination }).then(res => {
         // 加载状态结束
         this.loading = false
+        const data = res.data.pageInfo.list
+        data.forEach(item => {
+          item['downloadProgressFlag'] = false
+          item['downloadPercent'] = 0
+        })
         this.fileList.push(...res.data.pageInfo.list)
         this.closeAllCollapse()
         // this.pagination.pageNum++
@@ -348,7 +357,54 @@ export default {
     },
     // 文件下载
     downloadHandler (item) {
-      window.open(`${process.env.BASE_API}/file/downLoad?fileSaveName=${item.fileSaveName}`, '_blank');
+      const uri = `${process.env.BASE_API}/file/downLoad?fileSaveName=${item.fileSaveName}&X-Token=${getToken()}`
+      // if (window.cordova) {
+      //   this.cordovaDownload(uri, item)
+      // } else {
+      //   window.open(uri, '_blank')
+      // }
+      window.open(uri, '_blank')
+    },
+    cordovaDownload (uri, item) {
+      const fileTransfer = new window.FileTransfer()
+      uri = encodeURI(uri)
+      const fileURL = window.cordova.file.externalApplicationStorageDirectory + item.fileRealName
+      item.downloadProgressFlag = true
+
+      fileTransfer.download(
+        uri,
+        fileURL,
+        entry => {
+          console.log('download complete: ' + entry.toURL());
+          const URL = entry.toURL()
+          const strs = URL.split('storage/emulated/0')
+          this.$toast(`文件已下载至"${decodeURI(strs[1])}"!`)
+          item.downloadProgressFlag = false
+          item.downloadPercent = 0
+        },
+        error => {
+          console.log('download error source ' + error.source);
+          console.log('download error target ' + error.target);
+          console.log('download error code' + error.code);
+        },
+        false,
+        {
+          headers: {
+            'NetDisk-Token': getToken()
+          }
+        }
+      )
+      // 监听下载进度
+      fileTransfer.onprogress = e => {
+        if (e.lengthComputable) {
+          let progress = e.loaded / e.total
+          // 显示下载进度
+          progress = (progress * 100).toFixed(0);
+          if (progress % 5 === 0) {
+            item.downloadPercent = progress
+          }
+        }
+      }
     },
     // 重命名
     renameHandler (item) {

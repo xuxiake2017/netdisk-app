@@ -51,6 +51,8 @@ import { Logout } from '@/api/user'
 import { mapGetters } from 'vuex'
 import { Notify } from 'vant'
 import Vue from 'vue'
+// import data from '../data/emoji-data.js'
+import { parseToUnicode } from '../utils/emoji'
 Vue.use(Notify);
 export default {
   name: 'Home',
@@ -117,6 +119,14 @@ export default {
       get () {
         return `${this.formatFileSize(parseInt(this.user.usedMemory))} / ${this.formatFileSize(parseInt(this.user.totalMemory))}`
       }
+    },
+    networkStatus: {
+      get () {
+        return this.$store.getters.networkStatus
+      },
+      set (val) {
+        this.$store.commit('setNetworkStatus', val)
+      }
     }
   },
   watch: {
@@ -133,7 +143,6 @@ export default {
       //     this.friendMessagePopupShow = false
       //   }, 3000)
       // }
-      this.friendMessagePopupShow = true
       const messageContent = this.receive.content
       if (this.receive.type === 'FRIEND') {
         this.friendMessage.friendId = messageContent.from
@@ -147,9 +156,20 @@ export default {
         this.friendMessage.friendAvatar = messageContent.applicantAvatar
         this.friendMessage.content = messageContent.postscript
       }
-      window.setTimeout(() => {
-        this.friendMessagePopupShow = false
-      }, 3000)
+      if (window.cordova) {
+        window.cordova.plugins.notification.local.schedule({
+          id: this.friendMessage.friendId,
+          title: this.friendMessage.friendUsername,
+          text: this.friendMessage.content ? this.friendMessage.content : '[文件]',
+          icon: this.friendMessage.friendAvatar,
+          foreground: true
+        })
+      } else {
+        this.friendMessagePopupShow = true
+        window.setTimeout(() => {
+          this.friendMessagePopupShow = false
+        }, 3000)
+      }
     }
   },
   methods: {
@@ -215,6 +235,22 @@ export default {
           id: this.friendMessage.friendId
         }
       })
+    },
+    onDeviceReady () {
+      console.log(window.device.cordova)
+    },
+    offlineHandler () {
+      console.log('offlineHandler')
+      this.$toast('网络连接断开!')
+      this.networkStatus = false
+    },
+    onlineHandler () {
+      console.log('onlineHandler')
+      if (!this.networkStatus) {
+        this.$toast('网络连接恢复!')
+        this.networkStatus = true
+        this.$connect()
+      }
     }
   },
   mounted () {
@@ -232,6 +268,15 @@ export default {
         background: '#1989fa'
       });
     }
+    // console.log(data.emojiList)
+    const array = [1, 2]
+    console.log(array.indexOf(3))
+    parseToUnicode()
+  },
+  created () {
+    document.addEventListener('deviceready', this.onDeviceReady, false)
+    document.addEventListener('offline', this.offlineHandler, false);
+    document.addEventListener('online', this.onlineHandler, false);
   }
 }
 </script>

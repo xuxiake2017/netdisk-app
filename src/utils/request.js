@@ -2,6 +2,7 @@ import axios from 'axios'
 import { Toast } from 'vant'
 import Vue from 'vue'
 import qs from 'qs'
+import { getToken } from '@/utils/auth'
 
 Vue.use(Toast)
 
@@ -9,6 +10,23 @@ let axiosIns = axios.create({
   withCredentials: true,
   baseURL: process.env.BASE_API // api 的 base_url
 })
+
+// request拦截器
+axiosIns.interceptors.request.use(
+  config => {
+    // 让每个请求携带自定义token 请根据实际情况自行修改
+    const token = getToken()
+    if (token) {
+      config.headers['X-Token'] = token
+    }
+    return config
+  },
+  error => {
+    // Do something with request error
+    console.log(error) // for debug
+    Promise.reject(error)
+  }
+)
 
 axiosIns.interceptors.response.use(function (response) {
   let status = response.status

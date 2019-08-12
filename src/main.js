@@ -63,3 +63,14 @@ const vm = new Vue({
 })
 
 vm.$connect()
+
+// websocket心跳
+window.setInterval(() => {
+  if (store.getters.isConnected) {
+    let messageBase = {}
+    messageBase['type'] = 'HEARTBEAT'
+    messageBase['content'] = 'heartbeat'
+    messageBase['createTime'] = new Date().getTime()
+    vm.$socket.send(JSON.stringify(messageBase))
+  }
+}, 10000)

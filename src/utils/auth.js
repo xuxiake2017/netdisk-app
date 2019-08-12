@@ -1,15 +1,27 @@
 import Cookies from 'js-cookie'
 
-const TokenKey = 'NetDisk-Token'
+const TokenKey = 'X-Token'
 
 export function getToken () {
-  return Cookies.get(TokenKey)
+  if (window.cordova) {
+    return window.localStorage.getItem(TokenKey)
+  } else {
+    return Cookies.get(TokenKey)
+  }
 }
 
 export function setToken (token) {
-  return Cookies.set(TokenKey, token)
+  if (window.cordova) {
+    window.localStorage.setItem(TokenKey, token)
+  } else {
+    return Cookies.set(TokenKey, token)
+  }
 }
 
 export function removeToken () {
-  return Cookies.remove(TokenKey)
+  if (window.cordova) {
+    return window.localStorage.removeItem(TokenKey)
+  } else {
+    return Cookies.remove(TokenKey)
+  }
 }

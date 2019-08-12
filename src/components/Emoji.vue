@@ -41,7 +41,7 @@ export default {
   name: 'emoji',
   data () {
     return {
-      emojiData: data,
+      emojiData: data.emojiData,
       pannels: ['表情', '自然', '物品', '地点', '符号'],
       activeIndex: 0
     }

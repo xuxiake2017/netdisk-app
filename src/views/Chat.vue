@@ -212,7 +212,8 @@ import { mapGetters } from 'vuex'
 import Emoji from '../components/Emoji'
 import ChatText from '../components/ChatText'
 import ChatFileList from '../components/ChatFileList'
-import { ParseToHtmlDecimal } from '../api/emoji'
+// import { ParseToHtmlDecimal } from '../api/emoji'
+import { parseToUnicode } from '../utils/emoji'
 export default {
   name: 'Chat',
   mixins: [usermixin, mediaPreview],
@@ -354,7 +355,8 @@ export default {
         return
       }
       if (!this.socket.isConnected) {
-        this.$toast('websocket连接断开，请刷新页面!')
+        this.$toast('websocket重连中，请稍后再试!')
+        this.$connect()
         return
       }
       this.messagePackagingAndSend(this.messageCurrent)
@@ -518,12 +520,13 @@ export default {
     },
     // 选中emoji调用
     emojiSelect (emoji_) {
-      ParseToHtmlDecimal({
-        aliase: emoji_
-      }).then(res => {
-        this.messageCurrent = `${this.messageCurrent + res.data}`
-      })
+      // ParseToHtmlDecimal({
+      //   aliase: emoji_
+      // }).then(res => {
+      //   this.messageCurrent = `${this.messageCurrent + res.data}`
+      // })
       // '😂😂😂'
+      this.messageCurrent = `${this.messageCurrent + parseToUnicode(emoji_)}`
     },
     // 上拉框选择
     onSelect (item, index) {
