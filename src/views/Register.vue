@@ -75,7 +75,8 @@ export default {
         email: '',
         password: '',
         imgCode: ''
-      }
+      },
+      clientHeight: ''
     }
   },
   methods: {
@@ -133,14 +134,8 @@ export default {
     }
   },
   created () {
+    this.clientHeight = `${document.documentElement.clientHeight}`
     this.changeCaptcha()
-  },
-  computed: {
-    clientHeight: {
-      get () {
-        return this.$store.getters.clientHeight
-      }
-    }
   }
 }
 </script>

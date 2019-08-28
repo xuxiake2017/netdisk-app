@@ -10,9 +10,9 @@
             {{usernameSub(user.name)}}
           </van-col>
         </van-row>
-        <van-notice-bar mode="closeable">
+       <!-- <van-notice-bar mode="closeable">
           更多功能，请用电脑访问
-        </van-notice-bar>
+        </van-notice-bar>-->
         <van-cell :icon="item.meta.icon" is-link v-for="(item, index) in routes" :key="index" @click="jump(item.path)">
           <template slot="title">
             <span class="custom-text">{{item.meta.title}}</span>
@@ -29,13 +29,6 @@
         <!--<el-progress :text-inside="true" :stroke-width="18" :percentage="percentage" style="margin: 20px 15px">{{memoryInfo}}</el-progress>-->
       </van-row>
     </van-popup>
-    <van-popup v-model="friendMessagePopupShow" position="top" :overlay="false" class="friend-message-popup layui-layer-page layui-box layui-layim-min">
-      <div id="" class="layui-layer-content" style="height: 40px;" @click="jumpToChat">
-        <img id="layui-layim-min" :src="friendMessage.friendAvatar" style="cursor: move;">
-        <span v-if="friendMessage.content">{{friendMessage.content}}</span>
-        <span v-if="friendMessage.fileId">[文件]</span>
-      </div>
-    </van-popup>
     <van-nav-bar :title="title" :fixed="true" @click-left="clickLeftHandler" @click-right="clickRightHandler" class="home-nav-bar">
       <img :src="user.avatar" class="avatar-top" slot="left"/>
       <van-icon v-if="$route.name === 'fileList'" name="my-fileupload" slot="right" :size="'20px'"/>
@@ -51,22 +44,12 @@ import { Logout } from '@/api/user'
 import { mapGetters } from 'vuex'
 import { Notify } from 'vant'
 import Vue from 'vue'
-// import data from '../data/emoji-data.js'
-import { parseToUnicode } from '../utils/emoji'
-Vue.use(Notify);
+Vue.use(Notify)
 export default {
   name: 'Home',
   data () {
     return {
-      routes: [],
-      friendMessagePopupShow: false,
-      friendMessage: {
-        content: '',
-        friendId: null,
-        friendUsername: '',
-        friendAvatar: '',
-        fileId: null
-      }
+      routes: []
     }
   },
   computed: {
@@ -79,13 +62,8 @@ export default {
       }
     },
     ...mapGetters([
-      'user',
-      'receive',
-      'friendMap'
+      'user'
     ]),
-    createTime () {
-      return this.receive.createTime
-    },
     title: {
       get () {
         return this.$route.meta.title
@@ -126,49 +104,6 @@ export default {
       },
       set (val) {
         this.$store.commit('setNetworkStatus', val)
-      }
-    }
-  },
-  watch: {
-    // 监测是否收到新消息（以时间戳判断）
-    'createTime': function () {
-      // const routeName = this.$route.name
-      // if (routeName !== 'chat') {
-      //   this.friendMessagePopupShow = true
-      //   this.friendMessage.friendId = this.receive.from
-      //   this.friendMessage.friendUsername = this.friendMap.get(this.friendMessage.friendId).username
-      //   this.friendMessage.friendAvatar = this.friendMap.get(this.friendMessage.friendId).avatar
-      //   this.friendMessage.content = this.receive.content
-      //   window.setTimeout(() => {
-      //     this.friendMessagePopupShow = false
-      //   }, 3000)
-      // }
-      const messageContent = this.receive.content
-      if (this.receive.type === 'FRIEND') {
-        this.friendMessage.friendId = messageContent.from
-        this.friendMessage.friendUsername = messageContent.friendName
-        this.friendMessage.friendAvatar = messageContent.friendAvatar
-        this.friendMessage.content = messageContent.content
-        this.friendMessage.fileId = messageContent.fileId
-      } else if (this.receive.type === 'FRIEND_APPLY_FOR') {
-        this.friendMessage.friendId = messageContent.applicant
-        this.friendMessage.friendUsername = messageContent.applicantUsername
-        this.friendMessage.friendAvatar = messageContent.applicantAvatar
-        this.friendMessage.content = messageContent.postscript
-      }
-      if (window.cordova) {
-        window.cordova.plugins.notification.local.schedule({
-          id: this.friendMessage.friendId,
-          title: this.friendMessage.friendUsername,
-          text: this.friendMessage.content ? this.friendMessage.content : '[文件]',
-          icon: this.friendMessage.friendAvatar,
-          foreground: true
-        })
-      } else {
-        this.friendMessagePopupShow = true
-        window.setTimeout(() => {
-          this.friendMessagePopupShow = false
-        }, 3000)
       }
     }
   },
@@ -227,30 +162,6 @@ export default {
         return `${name.substring(0, 8)}...`
       }
       return name
-    },
-    jumpToChat () {
-      this.$router.push({
-        name: 'chat',
-        query: {
-          id: this.friendMessage.friendId
-        }
-      })
-    },
-    onDeviceReady () {
-      console.log(window.device.cordova)
-    },
-    offlineHandler () {
-      console.log('offlineHandler')
-      this.$toast('网络连接断开!')
-      this.networkStatus = false
-    },
-    onlineHandler () {
-      console.log('onlineHandler')
-      if (!this.networkStatus) {
-        this.$toast('网络连接恢复!')
-        this.networkStatus = true
-        this.$connect()
-      }
     }
   },
   mounted () {
@@ -268,15 +179,6 @@ export default {
         background: '#1989fa'
       });
     }
-    // console.log(data.emojiList)
-    const array = [1, 2]
-    console.log(array.indexOf(3))
-    parseToUnicode()
-  },
-  created () {
-    document.addEventListener('deviceready', this.onDeviceReady, false)
-    document.addEventListener('offline', this.offlineHandler, false);
-    document.addEventListener('online', this.onlineHandler, false);
   }
 }
 </script>
@@ -311,13 +213,5 @@ export default {
       border-radius: 15px;
       box-shadow:1px 1px 3px #333333;
     }
-  }
-  .friend-message-popup {
-    width: 100%;
-    height: 50px;
-    box-shadow: 1px 1px 50px rgba(0,0,0,.3);
-  }
-  .layui-layer-content span {
-    width: 250px;
   }
 </style>

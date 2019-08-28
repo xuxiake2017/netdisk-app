@@ -82,7 +82,7 @@
         left-arrow
         @click-left="chatPopupClose">
       </van-nav-bar>
-      <div class="layim-chat-main" :style="{'height': `${clientHeight - 130}px`}" ref="chatMain" @scroll="onScrollHandler">
+      <div class="layim-chat-main" :style="{'height': `${clientHeight - 138}px`}" ref="chatMain" @scroll="onScrollHandler">
         <van-pull-refresh v-model="isLoading" @refresh="onRefresh">
           <ul>
             <li v-for="item in messages" :key="item.id" :class="{ 'layim-chat-mine': item.mine }">
@@ -202,18 +202,18 @@
 
 <script>
 // import { SendMessage } from '../api/tuling'
-import { GetFriendMessages } from '../api/friendMessage'
-import { GetAllFriendNotify } from '../api/friendNotify'
-import { FriendApplyForOption, SearchFriend, AddFriendRequest } from '../api/friendApplyFor'
+import { GetFriendMessages } from '../../api/friendMessage'
+import { GetAllFriendNotify } from '../../api/friendNotify'
+import { FriendApplyForOption, SearchFriend, AddFriendRequest } from '../../api/friendApplyFor'
 import usermixin from '@/mixins/userInfo'
 import mediaPreview from '@/mixins/mediaPreview'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
-import Emoji from '../components/Emoji'
-import ChatText from '../components/ChatText'
-import ChatFileList from '../components/ChatFileList'
+import Emoji from '../../components/Emoji'
+import ChatText from '../../components/ChatText'
+import ChatFileList from '../../components/ChatFileList'
 // import { ParseToHtmlDecimal } from '../api/emoji'
-import { parseToUnicode } from '../utils/emoji'
+import { parseToUnicode } from '../../utils/emoji'
 export default {
   name: 'Chat',
   mixins: [usermixin, mediaPreview],
@@ -562,7 +562,7 @@ export default {
       this.addFriendConfirmDialogShow = true
     },
     // 发送添加好友请求
-    sendAddFriednRequest (done) {
+    sendAddFriendRequest (done) {
       AddFriendRequest({ ...this.addApplyForData }).then(res => {
         this.$toast('添加好友请求发送成功! ')
         done()
@@ -574,7 +574,7 @@ export default {
     // 添加好友确认对话框关闭
     beforeCloseHandler (action, done) {
       if (action === 'confirm') {
-        this.sendAddFriednRequest(done)
+        this.sendAddFriendRequest(done)
       } else {
         done()
       }

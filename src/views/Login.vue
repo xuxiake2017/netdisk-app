@@ -64,7 +64,8 @@ export default {
       captchaSrc: process.env.BASE_API + '/user/createImg',
       loading: false,
       icon: 'my-close-eye',
-      type: 'password'
+      type: 'password',
+      clientHeight: ''
     }
   },
   methods: {
@@ -102,14 +103,8 @@ export default {
     }
   },
   created () {
+    this.clientHeight = `${document.documentElement.clientHeight}`
     this.changeCaptcha()
-  },
-  computed: {
-    clientHeight: {
-      get () {
-        return this.$store.getters.clientHeight
-      }
-    }
   }
 }
 </script>
