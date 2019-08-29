@@ -4,7 +4,7 @@
       :title="'添加好友'"
       left-text="返回"
       left-arrow
-      @click-left="goBach">
+      @click-left="goBack">
     </van-nav-bar>
     <el-input placeholder="用户名/手机/邮箱" class="input-with-select" size="medium" v-model="searchKey">
       <i slot="suffix" class="el-input__icon el-icon-search" style="color: #1989fa;" @click="searchFriend"></i>
@@ -76,7 +76,7 @@ export default {
     ])
   },
   methods: {
-    goBach () {
+    goBack () {
       this.$router.go(-1)
     },
     // 同意添加好友
