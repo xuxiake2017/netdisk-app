@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="add-friend">
     <van-nav-bar
       :title="'添加好友'"
       left-text="返回"
@@ -160,6 +160,9 @@ export default {
 </script>
 
 <style scoped>
+  .add-friend {
+    text-align: left;
+  }
   .add-friend-confirm-dialog .layim-add-remark {
     width: 100%;
     display: block;

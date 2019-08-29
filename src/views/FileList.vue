@@ -58,7 +58,7 @@
                   <el-button type="success" icon="el-icon-check" size="mini" @click="editSubmit(item)"></el-button>
                   <el-button type="danger" icon="el-icon-close" size="mini" @click="editCancel(item)"></el-button>
                 </div>
-                <div v-else>
+                <div v-else class="file-name-show">
                   {{formatFileName(item)}}
                 </div>
               </van-col>
@@ -91,26 +91,6 @@
       show-cancel-button
       :before-close="beforeClose"
     >
-      <div v-if="action === 'rename'">
-        <div class="van-dialog__header">
-          <span>重命名</span>
-        </div>
-        <van-field
-          style="margin: 10px 0"
-          v-model="newFileName"
-          placeholder="请输入文件名"
-        />
-      </div>
-      <div v-if="action === 'mkdir'">
-        <div class="van-dialog__header">
-          <span>新建文件夹</span>
-        </div>
-        <van-field
-          style="margin: 10px 0"
-          v-model="newDir"
-          placeholder="请输入文件夹名"
-        />
-      </div>
       <div v-if="action === 'mvfile'">
         <div class="van-dialog__header">
           <span>移动文件</span>
@@ -197,9 +177,6 @@ export default {
       finished: false,
       activeNames: [],
       disabled: false,
-      // 重命名
-      renameRow: null,
-      newFileName: '',
       // 文件上传
       uploadData: {
         parentId: -1,
@@ -211,10 +188,6 @@ export default {
       // 管理对话框
       show: false,
       action: '',
-      // 新建文件夹
-      newDir: '',
-      // 文件移动
-      mvfileShow: false,
       // 用于树组件的销毁
       hackReset: false,
       dirs: [],
@@ -331,7 +304,7 @@ export default {
       if (className.indexOf('van-cell__right-icon') !== -1) {
         this.$refs.vanCollapse.switch(index, $vanCollapseItem.expanded)
       } else if (className.indexOf('van-button') !== -1) {
-      } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
+      } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1 || className.indexOf('file-name-show') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
         switch (item.fileType) {
           case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
@@ -467,7 +440,6 @@ export default {
     },
     mkdirHandler () {
       this.action = 'mkdir'
-      // this.show = true
       const item = {
         fileRealName: '',
         fileSaveName: '',
@@ -502,41 +474,6 @@ export default {
     },
     beforeClose (action, done) {
       switch (this.action) {
-        case 'rename':
-          if (action === 'confirm') {
-            if (this.newFileName) {
-              if (this.verifyFileName(this.newFileName)) {
-                this.reName(done)
-              } else {
-                this.$toast('文件名不合法！')
-                done(false)
-              }
-            } else {
-              this.$toast('文件名不能为空！')
-              done(false)
-            }
-          } else {
-            done()
-          }
-          break
-        case 'mkdir':
-          if (action === 'confirm') {
-            if (this.newDir) {
-              if (this.verifyFileName(this.newDir)) {
-                this.mkDir(done)
-              } else {
-                this.$toast('文件夹名不合法！')
-                done(false)
-              }
-            } else {
-              this.$toast('文件夹名不能为空！')
-              done(false)
-            }
-          } else {
-            done()
-            this.newDir = ''
-          }
-          break
         case 'mvfile':
           if (action === 'confirm') {
             this.mvFile(done)
