@@ -189,7 +189,7 @@ export default {
     .layim-msgbox li {
       position: relative;
       margin-bottom: 10px;
-      padding: 0 130px 10px 50px;
+      padding: 0 10px 10px 50px;
       line-height: 22px;
       border-bottom: 1px dotted #e2e2e2;
     }

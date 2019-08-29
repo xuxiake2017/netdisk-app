@@ -104,7 +104,7 @@ export default {
   },
   created () {
     this.clientHeight = `${document.documentElement.clientHeight}`
-    this.changeCaptcha()
+    // this.changeCaptcha()
   }
 }
 </script>

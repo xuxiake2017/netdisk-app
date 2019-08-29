@@ -38,37 +38,7 @@ export default {
     document.addEventListener('offline', this.offlineHandler, false)
     document.addEventListener('online', this.onlineHandler, false)
     // 开启websocket监听器
-    this.$options.sockets.onmessage = (data) => {
-      const receive = JSON.parse(data.data)
-      const messageContent = receive['content']
-      this.$store.dispatch('ReceiveMessagesHandler', receive)
-      if (receive.type === 'FRIEND') {
-        this.friendMessage.friendId = messageContent.from
-        this.friendMessage.friendUsername = messageContent.friendName
-        this.friendMessage.friendAvatar = messageContent.friendAvatar
-        this.friendMessage.content = messageContent.content
-        this.friendMessage.fileId = messageContent.fileId
-      } else if (receive.type === 'FRIEND_APPLY_FOR') {
-        this.friendMessage.friendId = messageContent.applicant
-        this.friendMessage.friendUsername = messageContent.applicantUsername
-        this.friendMessage.friendAvatar = messageContent.applicantAvatar
-        this.friendMessage.content = messageContent.postscript
-      }
-      if (window.cordova) {
-        window.cordova.plugins.notification.local.schedule({
-          id: this.friendMessage.friendId,
-          title: this.friendMessage.friendUsername,
-          text: this.friendMessage.content ? this.friendMessage.content : '[文件]',
-          icon: this.friendMessage.friendAvatar,
-          foreground: true
-        })
-      } else {
-        this.friendMessagePopupShow = true
-        window.setTimeout(() => {
-          this.friendMessagePopupShow = false
-        }, 3000)
-      }
-    }
+    this.$options.sockets.onmessage = this.onmessageHandler
   },
   computed: {
     ...mapGetters([
@@ -115,6 +85,37 @@ export default {
           friendId: this.friendMessage.friendId
         }
       })
+    },
+    onmessageHandler (data) {
+      const receive = JSON.parse(data.data)
+      const messageContent = receive['content']
+      this.$store.dispatch('ReceiveMessagesHandler', receive)
+      if (receive.type === 'FRIEND') {
+        this.friendMessage.friendId = messageContent.from
+        this.friendMessage.friendUsername = messageContent.friendName
+        this.friendMessage.friendAvatar = messageContent.friendAvatar
+        this.friendMessage.content = messageContent.content
+        this.friendMessage.fileId = messageContent.fileId
+      } else if (receive.type === 'FRIEND_APPLY_FOR') {
+        this.friendMessage.friendId = messageContent.applicant
+        this.friendMessage.friendUsername = messageContent.applicantUsername
+        this.friendMessage.friendAvatar = messageContent.applicantAvatar
+        this.friendMessage.content = messageContent.postscript
+      }
+      if (window.cordova) {
+        window.cordova.plugins.notification.local.schedule({
+          id: this.friendMessage.friendId,
+          title: this.friendMessage.friendUsername,
+          text: this.friendMessage.content ? this.friendMessage.content : '[文件]',
+          icon: this.friendMessage.friendAvatar,
+          foreground: true
+        })
+      } else {
+        this.friendMessagePopupShow = true
+        window.setTimeout(() => {
+          this.friendMessagePopupShow = false
+        }, 3000)
+      }
     }
   }
 }
@@ -125,10 +126,9 @@ export default {
     font-family: 'Avenir', Helvetica, Arial, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    /*text-align: center;*/
+    text-align: center;
     color: #2c3e50;
     /*background-color: #f2f3f5;*/
-    text-align: left;
   }
   .van-button--info {
     color: #fff;
@@ -147,6 +147,7 @@ export default {
     overflow: hidden;
   }
   .friend-message-popup {
+    text-align: left;
     width: 100%;
     height: 50px;
     box-shadow: 1px 1px 50px rgba(0,0,0,.3);
