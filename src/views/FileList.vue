@@ -53,7 +53,14 @@
                 <img :src="fileIcoFilter(item)"/>
               </van-col>
               <van-col offset="1">
-                {{formatFileName(item)}}
+                <div v-if="item.isEdit" class="edit-mode-bar">
+                  <el-input size="mini" style="width: 150px" v-model="item.fileRealName"></el-input>
+                  <el-button type="success" icon="el-icon-check" size="mini" @click="editSubmit(item)"></el-button>
+                  <el-button type="danger" icon="el-icon-close" size="mini" @click="editCancel(item)"></el-button>
+                </div>
+                <div v-else>
+                  {{formatFileName(item)}}
+                </div>
               </van-col>
             </van-row>
           </div>
@@ -257,6 +264,7 @@ export default {
         data.forEach(item => {
           item['downloadProgressFlag'] = false
           item['downloadPercent'] = 0
+          item['isEdit'] = false
         })
         this.fileList.push(...res.data.pageInfo.list)
         this.closeAllCollapse()
@@ -316,6 +324,10 @@ export default {
       const $vanCollapseItem = this.$refs.vanCollapse.items.find(item => {
         return index === item.name
       })
+      if (item.isEdit) {
+        this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        return
+      }
       if (className.indexOf('van-cell__right-icon') !== -1) {
         this.$refs.vanCollapse.switch(index, $vanCollapseItem.expanded)
       } else if (className.indexOf('van-button') !== -1) {
@@ -406,40 +418,74 @@ export default {
         }
       }
     },
+    editSubmit (item) {
+      if (this.action === 'mkdir') {
+        if (item.fileRealName) {
+          if (this.verifyFileName(item.fileRealName)) {
+            this.mkDir(item)
+          } else {
+            this.$toast('文件夹名不合法！')
+          }
+        } else {
+          this.$toast('文件夹名不能为空！')
+        }
+      } else if (this.action === 'rename') {
+        if (item.fileRealName) {
+          if (this.verifyFileName(item.fileRealName)) {
+            this.reName(item)
+          } else {
+            this.$toast('文件名不合法！')
+          }
+        } else {
+          this.$toast('文件名不能为空！')
+        }
+      }
+    },
+    editCancel (item) {
+      if (this.action === 'mkdir') {
+        this.fileList.splice(0, 1)
+      } else if (this.action === 'rename') {
+        item.isEdit = false
+      }
+    },
     // 重命名
     renameHandler (item) {
       this.action = 'rename'
-      this.renameRow = item
-      this.newFileName = item.fileRealName.substring(0, item.isDir && item.fileExtName ? item.fileRealName.lastIndexOf('.') : item.fileRealName.length)
-      this.show = true;
+      item.isEdit = true
     },
-    reName (done) {
+    reName (row) {
       ReName({
         parentId: this.filters.parentId,
-        fileSaveName: this.renameRow.fileSaveName,
-        fileRealName: this.newFileName + (this.renameRow.fileType === 0 ? '' : ('.' + this.renameRow.fileExtName)),
-        isDir: this.renameRow.isDir
+        fileSaveName: row.fileSaveName,
+        fileRealName: row.fileRealName,
+        isDir: row.isDir
       }).then(res => {
         this.$toast.success('文件重命名成功！')
-        done()
-        this.reLoad()
-        this.newFileName = ''
+        row.isEdit = false
       }).catch(res => {
-        done(false)
       })
     },
     mkdirHandler () {
       this.action = 'mkdir'
-      this.show = true
+      // this.show = true
+      const item = {
+        fileRealName: '',
+        fileSaveName: '',
+        fileStatus: '0',
+        fileType: 0,
+        id: null,
+        isDir: 0,
+        isEdit: true,
+        parentId: -1,
+        uploadTime: 1554350290000
+      }
+      this.fileList.splice(0, 0, item)
     },
-    mkDir (done) {
-      MkDir({fileRealName: this.newDir, parentId: this.filters.parentId}).then(res => {
-        this.$toast.success(`文件夹"${this.newDir}"新建成功！`)
+    mkDir (row) {
+      MkDir({fileRealName: row.fileRealName, parentId: this.filters.parentId}).then(res => {
+        this.$toast.success(`文件夹"${row.fileRealName}"新建成功！`)
         this.reLoad()
-        this.newDir = ''
-        done()
       }).catch(res => {
-        done(false)
       })
     },
     // 验证文件（夹）名是否合法
@@ -670,5 +716,13 @@ export default {
     right: 20px;
     text-align: center;
     line-height: 30px;
+  }
+  .van-list {
+    .edit-mode-bar {
+      .el-button {
+        /*padding: 7px 10px;*/
+        margin-left: 0;
+      }
+    }
   }
 </style>
