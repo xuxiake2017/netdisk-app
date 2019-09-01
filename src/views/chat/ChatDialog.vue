@@ -42,9 +42,14 @@
       </div>
       <div class="layui-unselect layim-chat-tool">
         <span class="layui-icon layim-tool-face" title="选择表情" @click="emojiKeyBoard" :class="{'emoji-key-board-show': emojiKeyBoardShow, 'emoji-key-board-hide': !emojiKeyBoardShow}"></span>
-        <span class="layui-icon layim-tool-image" title="上传图片">
-            <input type="file" name="file">
-          </span>
+        <el-upload
+          :action="uploadAction"
+          :show-file-list="false"
+          :with-credentials="true"
+          :on-success="onSuccessHandler"
+          style="display: inline-block">
+          <span class="layui-icon layim-tool-image" title="上传图片"></span>
+        </el-upload>
         <span class="layui-icon layim-tool-image" title="发送文件" @click="chatFileListPopupOpen"></span>
         <span class="layim-tool-log"><i class="layui-icon"></i>聊天记录</span>
       </div>
@@ -107,7 +112,8 @@ export default {
       // 是否正在刷新标记（聊天对话消息列表）
       isLoading: false,
       // 文件选择弹框标记
-      chatFileListPopup: false
+      chatFileListPopup: false,
+      uploadAction: `${process.env.BASE_API}/friendMessage/uploadImage`
     }
   },
   mounted () {
@@ -356,6 +362,14 @@ export default {
           }).catch(res => {
             // 取消
           })
+      }
+    },
+    onSuccessHandler (response, file, fileList) {
+      if (response.code === 20000) {
+        this.messageCurrent = response.data
+        this.sendMessage()
+      } else {
+        this.$toast('上传失败!')
       }
     }
   }

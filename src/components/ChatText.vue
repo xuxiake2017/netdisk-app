@@ -1,17 +1,31 @@
 <template>
-  <div v-html="msgContent" @click="clickHandler"></div>
+  <div @click="clickHandler" class="chat-text">
+    <div v-html="msgContent"></div>
+    <el-image
+      v-if="isImage"
+      :src="msg"
+      :lazy="false"
+      :class="{'img-load-error': error}"
+      fit="cover"
+      @error="onErrorHandler">
+    </el-image>
+  </div>
 </template>
 
 <script>
 import { emojiConvert } from '../utils/emoji'
 import util from '../utils/util'
 import { FindById } from '../api/file'
+import { ImagePreview } from 'vant'
+
 export default {
   name: 'ChatText',
   data () {
     return {
       msgContent: '',
-      file: null
+      file: null,
+      isImage: false,
+      error: false
     }
   },
   props: {
@@ -25,6 +39,11 @@ export default {
   methods: {
     convert () {
       if (this.msg) {
+        const reg = /^http:\/\/.*?(gif|png|jpg|jpeg)$/i
+        if (reg.test(this.msg)) {
+          this.isImage = true
+          return
+        }
         const newData = this.msg.replace(/(:)\w+(:)/g, function (s, match) {
           return emojiConvert(s)
         })
@@ -105,10 +124,19 @@ export default {
       return util.formatFileSize(row.fileSize)
     },
     clickHandler () {
+      if (this.isImage && !this.error) {
+        ImagePreview([
+          this.msg
+        ])
+        return
+      }
       if (!this.file) {
         return
       }
       this.$emit('file-click', this.file)
+    },
+    onErrorHandler () {
+      this.error = true
     }
   },
   mounted () {
@@ -117,8 +145,16 @@ export default {
 }
 </script>
 
-<style scoped>
-
+<style rel="stylesheet/scss" lang="scss" scoped>
+  .chat-text {
+    .el-image {
+      width: 100px;
+    }
+    .img-load-error {
+      width: 100px;
+      height: 60px;
+    }
+  }
 </style>
 
 <style rel="stylesheet/scss" lang="scss">
