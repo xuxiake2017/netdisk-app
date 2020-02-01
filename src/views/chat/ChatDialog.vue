@@ -47,6 +47,7 @@
           :show-file-list="false"
           :with-credentials="true"
           :on-success="onSuccessHandler"
+          :before-upload="beforeUpload"
           style="display: inline-block">
           <span class="layui-icon layim-tool-image" title="上传图片"></span>
         </el-upload>
@@ -370,6 +371,27 @@ export default {
         this.sendMessage()
       } else {
         this.$toast('上传失败!')
+      }
+    },
+    beforeUpload (file) {
+      const isLt2M = file.size / 1024 / 1024 < 2
+      if (!this.isImage(file)) {
+        this.$toast('选择的文件不是图片!')
+      }
+      if (!isLt2M) {
+        this.$toast('上传图片大小不能超过 10MB!')
+      }
+      return this.isImage(file) && isLt2M;
+    },
+    // 判断是否是图片
+    isImage (file) {
+      const isJPG = file.type === 'image/jpeg'
+      const isPNG = file.type === 'image/png'
+      const isGIF = file.type === 'image/gif'
+      if (isJPG || isPNG || isGIF) {
+        return true
+      } else {
+        return false
       }
     }
   }
