@@ -79,6 +79,7 @@
 </template>
 
 <script>
+import { FriendApplyForOption } from '@/api/friendApplyFor'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
 import ChatFileList from '@/components/ChatFileList'
@@ -168,6 +169,39 @@ export default {
           name: 'addFriend'
         })
       }
+    },
+    // 同意添加好友
+    agree (item) {
+      this.$dialog.confirm({
+        title: '标题',
+        message: `确认同意添加${item.content.applicantUsername}为好友？`
+      }).then(() => {
+        FriendApplyForOption({
+          applicant: item.content.applicant,
+          option: 1
+        }).then(res => {
+          this.getAllFriendNotify()
+          this.getInfo()
+        })
+      }).catch(() => {
+        // on cancel
+      });
+    },
+    // 拒绝添加好友
+    refuse (item) {
+      this.$dialog.confirm({
+        title: '标题',
+        message: `确认拒绝${item.content.applicantUsername}的好友申请？`
+      }).then(() => {
+        FriendApplyForOption({
+          applicant: item.content.applicant,
+          option: 2
+        }).then(res => {
+          this.getAllFriendNotify()
+        })
+      }).catch(() => {
+        // on cancel
+      });
     }
   }
 }
