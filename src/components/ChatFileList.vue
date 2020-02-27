@@ -42,10 +42,8 @@
 <script>
 import { GetFileList } from '@/api/file'
 import util from '@/utils/util'
-import usermixin from '@/mixins/userInfo'
 export default {
   name: 'ChatFileList',
-  mixins: [usermixin],
   data () {
     return {
       // 储存文件树路径

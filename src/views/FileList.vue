@@ -4,6 +4,7 @@
       <van-row style="margin: 10px 10px;">
         <el-upload
           ref="upload"
+          :file-list="uploadFileList"
           :action="uploadAction"
           :before-remove="beforeRemove"
           :before-upload="beforeUpload"
@@ -146,14 +147,13 @@ import { GetFileList, UploadMD5, ListAllDir, MkDir, MoveFile, DeleteFile, ReName
 import { ShareFile } from '@/api/share'
 import GetFileMD5 from '@/utils/getFileMD5'
 import util from '@/utils/util'
-import usermixin from '@/mixins/userInfo'
 import mediaPreview from '@/mixins/mediaPreview'
 import { mapGetters } from 'vuex'
 import ClipBoard from 'clipboard'
 import { getToken } from '@/utils/auth'
 export default {
   name: 'FileList',
-  mixins: [usermixin, mediaPreview],
+  mixins: [mediaPreview],
   data () {
     return {
       // 储存文件树路径
@@ -185,6 +185,7 @@ export default {
       },
       uploadLimit: 1,
       uploadAction: `${process.env.BASE_API}/file/fileUpload`,
+      uploadFileList: [],
       // 管理对话框
       show: false,
       action: '',
@@ -298,7 +299,9 @@ export default {
         return index === item.name
       })
       if (item.isEdit) {
-        this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        if ($vanCollapseItem) {
+          this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        }
         return
       }
       if (className.indexOf('van-cell__right-icon') !== -1) {
@@ -306,18 +309,17 @@ export default {
       } else if (className.indexOf('van-button') !== -1) {
       } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1 || className.indexOf('file-name-show') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        const params = { id: item.id }
         switch (item.fileType) {
           case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
             this.getSubFileList(item)
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
-            this.imagePreview(item)
+            this.imagePreview(params)
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
-            this.mediaPreview(item)
-            break
           case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
-            this.mediaPreview(item)
+            this.mediaPreview(params)
             break
         }
       } else {
@@ -334,7 +336,7 @@ export default {
           this.$toast.success(`删除成功！`)
           this.$refs.vanCollapse.switch(index, false)
           this.reLoad()
-          this.getInfo();
+          this.$store.dispatch('getInfo')
         })
       }).catch(res => {
         // 取消
@@ -521,10 +523,12 @@ export default {
         // 服务器已经存在该文件
         UploadMD5(file_).then(res => {
           this.$toast.success(`${file.name}上传成功！`);
-          this.getInfo()
+          this.$store.dispatch('getInfo')
+          this.uploadFileList.push({ name: file.name, url: '' })
         }).catch(res => {
         })
-        return false
+        throw new Error('服务器已经存在该文件');
+        // return false
       } else {
         // 服务器不存在该文件，需要上传
         return true
@@ -541,7 +545,7 @@ export default {
     },
     // 文件上传成功时的钩子
     onSuccess (response, file, fileList) {
-      this.getInfo()
+      this.$store.dispatch('getInfo')
     },
     // 文件手动上传
     submitUpload () {

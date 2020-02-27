@@ -59,6 +59,7 @@
 <script>
 import { RegisterApp } from '@/api/user'
 import { checkEmail, validateCaptcha, validatePassword } from '../utils/validate'
+import { setToken } from '@/utils/auth'
 export default {
   data () {
     return {
@@ -116,18 +117,36 @@ export default {
         this.loading = true
         RegisterApp({ ...this.regData }).then(res => {
           this.loading = false
-          this.$dialog.confirm({
-            title: '提示',
-            message: '注册成功，是否立即登录？'
-          }).then(() => {
-            this.$router.push({ path: '/login' })
-          }).catch(() => {
-            // on cancel
+          this.setInterval(() => {
+            setToken(res.data.token)
+            this.$router.push({ path: '/fileList' })
+            // 打开websocket连接
+            this.$connect()
           })
         }).catch(res => {
           this.loading = false
         })
       }
+    },
+    setInterval (done) {
+      const toast = this.$toast.loading({
+        duration: 0,
+        forbidClick: true,
+        loadingType: 'circular',
+        message: `注册成功！3秒后跳转到首页`
+      })
+
+      let second = 3;
+      const timer = setInterval(() => {
+        second--
+        if (second) {
+          toast.message = `注册成功！${second}秒后跳转到首页`
+        } else {
+          clearInterval(timer)
+          this.$toast.clear()
+          done()
+        }
+      }, 1000)
     },
     toLogin () {
       this.$router.push({ path: '/login' });

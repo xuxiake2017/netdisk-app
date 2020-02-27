@@ -81,7 +81,6 @@
 import { parseToUnicode } from '@/utils/emoji'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
-import usermixin from '@/mixins/userInfo'
 import mediaPreview from '@/mixins/mediaPreview'
 import Emoji from '@/components/Emoji'
 import ChatText from '@/components/ChatText'
@@ -90,7 +89,7 @@ import { GetFriendMessages } from '@/api/friendMessage'
 export default {
   // 聊天对话
   name: 'ChatDialog',
-  mixins: [usermixin, mediaPreview],
+  mixins: [mediaPreview],
   components: {
     Emoji,
     ChatText,
@@ -349,8 +348,6 @@ export default {
           this.imagePreview(file)
           break
         case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
-          this.mediaPreview(file)
-          break
         case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
           this.mediaPreview(file)
           break

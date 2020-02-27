@@ -180,8 +180,9 @@ export default {
           applicant: item.content.applicant,
           option: 1
         }).then(res => {
-          this.getAllFriendNotify()
-          this.getInfo()
+          this.$store.dispatch('getInfo')
+          this.$store.dispatch('GetFriendMessages')
+          this.$store.dispatch('GetAllFriendNotify')
         })
       }).catch(() => {
         // on cancel
@@ -197,7 +198,7 @@ export default {
           applicant: item.content.applicant,
           option: 2
         }).then(res => {
-          this.getAllFriendNotify()
+          this.$store.dispatch('GetAllFriendNotify')
         })
       }).catch(() => {
         // on cancel

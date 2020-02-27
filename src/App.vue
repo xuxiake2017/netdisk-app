@@ -13,6 +13,7 @@
 
 <script>
 import { mapGetters } from 'vuex'
+import { UpdatePrincipal } from './api/user'
 export default {
   name: 'App',
   data () {
@@ -101,6 +102,11 @@ export default {
         this.friendMessage.friendUsername = messageContent.applicantUsername
         this.friendMessage.friendAvatar = messageContent.applicantAvatar
         this.friendMessage.content = messageContent.postscript
+      } else if (receive.type === 'SYSTEM') {
+        if (receive.content === 'updatePrincipal') {
+          this.updatePrincipal()
+        }
+        return
       }
       if (window.cordova) {
         window.cordova.plugins.notification.local.schedule({
@@ -116,6 +122,11 @@ export default {
           this.friendMessagePopupShow = false
         }, 3000)
       }
+    },
+    updatePrincipal () {
+      UpdatePrincipal().then(res => {
+        this.$store.dispatch('getInfo')
+      })
     }
   }
 }

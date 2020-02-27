@@ -2,7 +2,6 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import { getToken } from '@/utils/auth'
 import store from '../store'
-import { GetInfo } from '@/api/user'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import homeRoute from './home'
@@ -38,13 +37,9 @@ router.beforeEach((to, from, next) => {
       if (user) {
         next()
       } else {
-        GetInfo().then(res => {
-          store.commit('storeUser', res.data)
-          res.data.friendList.forEach(item => {
-            store.commit('setFriend', item)
-          })
+        store.dispatch('getInfo').then(() => {
           next()
-        }).catch(res => {
+        }).catch(() => {
           store.commit('delUser')
           next({ path: '/login' })
         })

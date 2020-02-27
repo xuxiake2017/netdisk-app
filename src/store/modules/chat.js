@@ -37,9 +37,16 @@ function makeFriendMessages (friendId, commit, state) {
     state.paginationMap.set(friendId, temp)
   }
 }
-function receiveMessagesHandlerFunction (dispatch, state, receive) {
+function receiveMessagesHandlerFunction (dispatch, state, rootGetters, receive) {
   const messageContent = receive['content']
   if (receive['type'] === 'FRIEND') {
+    const friendMap = rootGetters.friendMap
+    const friendId = messageContent.friendId
+    if (!friendMap.get(friendId)) {
+      dispatch('getInfo')
+      dispatch('GetAllFriendNotify')
+      return
+    }
     state.friendMessagesAll.push(messageContent)
     let friendIndex = null
     state.friendMessages.forEach((item, index) => {
@@ -88,11 +95,17 @@ export default {
     SET_FRIEND_MESSAGES_ALL: (state, val) => {
       state.friendMessagesAll = val
     },
+    CLEAR_FRIEND_MESSAGES_ALL: state => {
+      state.friendMessagesAll.splice(0)
+    },
     SET_FRIEND_MESSAGES_ALL_ITEM: (state, val) => {
       state.friendMessagesAll.push(val)
     },
     SET_FRIEND_MESSAGES: (state, val) => {
       state.friendMessages = val
+    },
+    CLEAR_FRIEND_MESSAGES: state => {
+      state.friendMessages.splice(0)
     },
     SET_FRIEND_MESSAGES_ITEM: (state, val) => {
       state.friendMessages.push(val)
@@ -102,7 +115,8 @@ export default {
     // 获取所有的聊天信息
     GetFriendMessages ({ commit, state }, params) {
       return new Promise((resolve, reject) => {
-        state.friendMessages.splice(0)
+        commit('CLEAR_FRIEND_MESSAGES_ALL')
+        commit('CLEAR_FRIEND_MESSAGES')
         GetFriendMessages(params).then(res => {
           const data = res.data
           let temp = new Map()
@@ -128,7 +142,7 @@ export default {
         })
       })
     },
-    // 获取当前对话的聊天信息
+    // 获取当前对话的分页
     GetDialogPagination ({ commit, state }, friendId) {
       return new Promise((resolve, reject) => {
         const data = state.paginationMap.get(friendId)
@@ -139,7 +153,7 @@ export default {
         }
       })
     },
-    // 获取当前对话的分页
+    // 获取当前对话的聊天信息
     GetDialogFriendMessages ({ commit, state }, friendId) {
       return new Promise((resolve, reject) => {
         const data = state.messagesMap.get(friendId)
@@ -151,13 +165,11 @@ export default {
       })
     },
     // 收到好友消息进行处理
-    ReceiveMessagesHandler ({ dispatch, commit, state }, receive) {
-      console.log(receive)
+    ReceiveMessagesHandler ({ dispatch, commit, state, rootGetters }, receive) {
       if (state.messagesMap.size === 0) {
         dispatch('GetFriendMessages')
-      } else {
-        receiveMessagesHandlerFunction(dispatch, state, receive)
       }
+      receiveMessagesHandlerFunction(dispatch, state, rootGetters, receive)
     },
     // 获取所有通知
     GetAllFriendNotify ({ dispatch, commit, state }) {

@@ -109,7 +109,6 @@ export default {
       AddFriendRequest({ ...this.addApplyForData }).then(res => {
         this.$toast('添加好友请求发送成功! ')
         done()
-        this.getAllFriendNotify()
       }).catch(res => {
         done(false)
       })

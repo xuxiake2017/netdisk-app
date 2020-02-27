@@ -172,7 +172,7 @@ export default {
       display: inline-block;
     }
     .file-box-name {
-      max-height: 50px;
+      max-height: 45px;
       vertical-align: top;
       overflow: hidden;
       text-overflow: ellipsis;

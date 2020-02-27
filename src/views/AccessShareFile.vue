@@ -43,7 +43,7 @@
           </van-row>
           <van-row style="margin-top: 5px">
             <van-button v-if="item.isDir" size="mini" type="primary" @click="handleDownload(index, item)">下载</van-button>
-            <van-button size="mini" type="warning" @click="handleSaveToCloud(index, item)" style="width: 60px">保存到网盘</van-button>
+            <van-button size="mini" type="warning" @click="handleSaveToCloud(index, item)" style="width: 70px">保存到网盘</van-button>
           </van-row>
         </van-collapse-item>
       </van-collapse>
@@ -208,13 +208,11 @@ export default {
             this.getSublistClick(item)
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
-            this.imagePreview(item)
+            this.imagePreview(this.shareFile)
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
-            this.mediaPreview(item)
-            break
           case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
-            this.mediaPreview(item)
+            this.mediaPreview(this.shareFile)
             break
         }
       } else {
@@ -261,6 +259,7 @@ export default {
     }
   },
   mounted () {
+    this.previewFlag = 2
     this.shareFile.shareId = this.$route.params.shareId
     if (this.shareFile.shareId) {
       this.getShareFile()

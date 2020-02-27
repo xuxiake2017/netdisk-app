@@ -51,3 +51,7 @@ export const Register = params => {
 export const RegisterApp = params => {
   return post('user/registerApp', params).then(res => res.data)
 }
+
+export const UpdatePrincipal = params => {
+  return post('user/updatePrincipal', params).then(res => res.data)
+}
