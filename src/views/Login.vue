@@ -91,8 +91,11 @@ export default {
           // this.$store.commit('storeUser', res.data)
           setToken(res.data.token)
           this.$router.push({ path: '/fileList' })
-          // 打开websocket连接
-          this.$connect()
+          // 打开socket连接
+          this.$socket.io.opts.query = {
+            'X-Token': res.data.token
+          }
+          this.$socket.open()
         }).catch(res => {
           this.loading = false
         })

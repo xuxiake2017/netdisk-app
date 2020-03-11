@@ -38,8 +38,7 @@ export default {
     document.addEventListener('deviceready', this.onDeviceReady, false)
     document.addEventListener('offline', this.offlineHandler, false)
     document.addEventListener('online', this.onlineHandler, false)
-    // 开启websocket监听器
-    this.$options.sockets.onmessage = this.onmessageHandler
+    this.$options.sockets.onchatmessage = this.onmessageHandler
   },
   computed: {
     ...mapGetters([
@@ -88,7 +87,12 @@ export default {
       })
     },
     onmessageHandler (data) {
-      const receive = JSON.parse(data.data)
+      console.log(data)
+      if (data.code) {
+        this.$toast(data.msg)
+        return
+      }
+      const receive = data
       const messageContent = receive['content']
       this.$store.dispatch('ReceiveMessagesHandler', receive)
       if (receive.type === 'FRIEND') {

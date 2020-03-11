@@ -19,7 +19,7 @@ export default function GetFileMD5 (file, uid, parentId) {
   let fileSize = file.size;
   let fileRealName = file.name;
   let lastModifiedDate = file.lastModifiedDate.getTime();
-  if (fileSize > 1024 * 1024 * 100) {
+  if (fileSize > 1024 * 1024 * 200) {
     Toast.fail('文件过大，请重新选择');
     return;
   }

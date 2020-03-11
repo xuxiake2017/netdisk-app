@@ -218,8 +218,8 @@ export default {
         return
       }
       if (!this.socket.isConnected) {
-        this.$toast('websocket重连中，请稍后再试!')
-        this.$connect()
+        this.$toast('socket重连中，请稍后再试!')
+        this.$socket.open()
         return
       }
       this.messagePackagingAndSend(this.messageCurrent)
@@ -247,7 +247,7 @@ export default {
       messageBase['type'] = 'FRIEND'
       messageBase['content'] = packet
       messageBase['createTime'] = new Date().getTime()
-      this.$socket.send(JSON.stringify(messageBase))
+      this.$socket.emit('on_chat_message', JSON.stringify(messageBase))
       let temp = {}
       temp.img = this.user.avatar
       temp.user = this.user.name

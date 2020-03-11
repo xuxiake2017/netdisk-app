@@ -1,5 +1,6 @@
 import { GetFriendMessages } from '@/api/friendMessage'
 import util from '@/utils/util'
+import { parseToUnicode } from '@/utils/emoji'
 import { GetAllFriendNotify } from '@/api/friendNotify'
 
 function makeFriendMessages (friendId, commit, state) {
@@ -122,6 +123,7 @@ export default {
           let temp = new Map()
           commit('SET_FRIEND_MESSAGES_ALL', data)
           data.forEach(item => {
+            item.content = parseToUnicode(item.content)
             const friendId = item.friendId
             const friend = temp.get(friendId);
             if (!friend) {
@@ -167,9 +169,12 @@ export default {
     // 收到好友消息进行处理
     ReceiveMessagesHandler ({ dispatch, commit, state, rootGetters }, receive) {
       if (state.messagesMap.size === 0) {
-        dispatch('GetFriendMessages')
+        dispatch('GetFriendMessages').then(() => {
+          receiveMessagesHandlerFunction(dispatch, state, rootGetters, receive)
+        })
+      } else {
+        receiveMessagesHandlerFunction(dispatch, state, rootGetters, receive)
       }
-      receiveMessagesHandlerFunction(dispatch, state, rootGetters, receive)
     },
     // 获取所有通知
     GetAllFriendNotify ({ dispatch, commit, state }) {
