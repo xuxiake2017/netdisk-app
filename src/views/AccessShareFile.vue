@@ -82,7 +82,7 @@ export default {
       fileIoc: '',
       shareFile: {
         fileId: 0,
-        fileRealName: '',
+        fileName: '',
         fileSaveName: '',
         fileSize: null,
         fileType: 0,
@@ -174,7 +174,7 @@ export default {
       })
     },
     getSublistClick (item) {
-      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
+      this.pathStore.push({parentId: item.id, fileRealName: item.fileName})
       this.getSublist(item.id)
     },
     fileIcoFilter (row) {
@@ -182,7 +182,7 @@ export default {
     },
     // 文件名过长截取
     formatFileName (row) {
-      return util.formatFileName(row.fileRealName, row.isDir)
+      return util.formatFileName(row.fileName, row.isDir)
     },
     // 格式化文件大小
     formatFileSize (row, column) {
@@ -190,7 +190,7 @@ export default {
     },
     // 格式化文件时间
     formatFileTime (row, column) {
-      return util.formatDate.format(new Date(row.uploadTime), 'yyyy-MM-dd hh:mm:ss')
+      return util.formatDate.format(new Date(row.updateTime), 'yyyy-MM-dd hh:mm:ss')
     },
     // 折叠面板点击事件，拦截展开
     clickHandler (event, item, index) {
@@ -203,16 +203,17 @@ export default {
       } else if (className.indexOf('van-button') !== -1) {
       } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
+        const {shareId, sharePwd} = this.shareFile
         switch (item.fileType) {
           case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
             this.getSublistClick(item)
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_PIC:
-            this.imagePreview(this.shareFile)
+            this.imagePreview({shareId, sharePwd, fileId: item.id})
             break
           case this.$NetdiskConstant.FILE_TYPE_OF_VIDEO:
           case this.$NetdiskConstant.FILE_TYPE_OF_MUSIC:
-            this.mediaPreview(this.shareFile)
+            this.mediaPreview({shareId, sharePwd, fileId: item.id})
             break
         }
       } else {

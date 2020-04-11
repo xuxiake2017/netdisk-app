@@ -27,3 +27,7 @@ export const GetSubList = params => {
 export const SaveToCloud = params => {
   return post('share/saveToCloud', params).then(res => res.data)
 }
+
+export const GetShareFileMediaInfo = params => {
+  return post('share/getFileMediaInfo', params).then(res => res.data)
+}

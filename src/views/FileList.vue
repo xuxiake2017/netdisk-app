@@ -55,7 +55,7 @@
               </van-col>
               <van-col offset="1">
                 <div v-if="item.isEdit" class="edit-mode-bar">
-                  <el-input size="mini" style="width: 150px" v-model="item.fileRealName"></el-input>
+                  <el-input size="mini" style="width: 150px" v-model="item.fileName"></el-input>
                   <el-button type="success" icon="el-icon-check" size="mini" @click="editSubmit(item)"></el-button>
                   <el-button type="danger" icon="el-icon-close" size="mini" @click="editCancel(item)"></el-button>
                 </div>
@@ -192,7 +192,7 @@ export default {
       // 用于树组件的销毁
       hackReset: false,
       dirs: [],
-      movedFileSaveName: '',
+      movedFileKey: '',
       movedId: 0,
       // 文件分享
       message: '',
@@ -219,7 +219,7 @@ export default {
     },
     // 文件名过长截取
     formatFileName (row) {
-      return util.formatFileName(row.fileRealName, row.isDir)
+      return util.formatFileName(row.fileName, row.isDir)
     },
     // 格式化文件大小
     formatFileSize (row, column) {
@@ -227,7 +227,7 @@ export default {
     },
     // 格式化文件时间
     formatFileTime (row, column) {
-      return util.formatDate.format(new Date(row.uploadTime), 'yyyy-MM-dd hh:mm:ss')
+      return util.formatDate.format(new Date(row.updateTime), 'yyyy-MM-dd hh:mm:ss')
     },
     getFileList () {
       this.pagination.pageNum++
@@ -278,7 +278,7 @@ export default {
       }
       this.filters.parentId = item.id
       this.reLoad()
-      this.pathStore.push({parentId: item.id, fileRealName: item.fileRealName})
+      this.pathStore.push({parentId: item.id, fileRealName: item.fileName})
     },
     // 文件路径跳转
     jump (item, index) {
@@ -309,7 +309,7 @@ export default {
       } else if (className.indexOf('van-button') !== -1) {
       } else if (className.indexOf('van-row') !== -1 || className.indexOf('van-col van-col--offset-1') !== -1 || className.indexOf('file-name-show') !== -1) {
         this.$refs.vanCollapse.switch(index, !$vanCollapseItem.expanded)
-        const params = { id: item.id }
+        const params = { fileKey: item.key }
         switch (item.fileType) {
           case this.$NetdiskConstant.FILE_TYPE_OF_DIR:
             this.getSubFileList(item)
@@ -332,7 +332,7 @@ export default {
         title: '提示',
         message: '确认删除？'
       }).then(res => {
-        DeleteFile({ fileSaveName: item.fileSaveName }).then(res => {
+        DeleteFile({ fileKey: item.key }).then(res => {
           this.$toast.success(`删除成功！`)
           this.$refs.vanCollapse.switch(index, false)
           this.reLoad()
@@ -344,7 +344,7 @@ export default {
     },
     // 文件下载
     downloadHandler (item) {
-      const uri = `${process.env.BASE_API}/file/downLoad?fileSaveName=${item.fileSaveName}&X-Token=${getToken()}`
+      const uri = `${process.env.BASE_API}/file/downLoad?fileKey=${item.key}&X-Token=${getToken()}`
       // if (window.cordova) {
       //   this.cordovaDownload(uri, item)
       // } else {
@@ -355,7 +355,7 @@ export default {
     cordovaDownload (uri, item) {
       const fileTransfer = new window.FileTransfer()
       uri = encodeURI(uri)
-      const fileURL = window.cordova.file.externalApplicationStorageDirectory + item.fileRealName
+      const fileURL = window.cordova.file.externalApplicationStorageDirectory + item.fileName
       item.downloadProgressFlag = true
 
       fileTransfer.download(
@@ -395,8 +395,8 @@ export default {
     },
     editSubmit (item) {
       if (this.action === 'mkdir') {
-        if (item.fileRealName) {
-          if (this.verifyFileName(item.fileRealName)) {
+        if (item.fileName) {
+          if (this.verifyFileName(item.fileName)) {
             this.mkDir(item)
           } else {
             this.$toast('文件夹名不合法！')
@@ -405,8 +405,8 @@ export default {
           this.$toast('文件夹名不能为空！')
         }
       } else if (this.action === 'rename') {
-        if (item.fileRealName) {
-          if (this.verifyFileName(item.fileRealName)) {
+        if (item.fileName) {
+          if (this.verifyFileName(item.fileName)) {
             this.reName(item)
           } else {
             this.$toast('文件名不合法！')
@@ -431,8 +431,8 @@ export default {
     reName (row) {
       ReName({
         parentId: this.filters.parentId,
-        fileSaveName: row.fileSaveName,
-        fileRealName: row.fileRealName,
+        key: row.key,
+        fileName: row.fileName,
         isDir: row.isDir
       }).then(res => {
         this.$toast.success('文件重命名成功！')
@@ -443,21 +443,21 @@ export default {
     mkdirHandler () {
       this.action = 'mkdir'
       const item = {
-        fileRealName: '',
-        fileSaveName: '',
+        fileName: '',
+        key: '',
         fileStatus: '0',
         fileType: 0,
         id: null,
         isDir: 0,
         isEdit: true,
         parentId: -1,
-        uploadTime: 1554350290000
+        updateTime: 1554350290000
       }
       this.fileList.splice(0, 0, item)
     },
     mkDir (row) {
-      MkDir({fileRealName: row.fileRealName, parentId: this.filters.parentId}).then(res => {
-        this.$toast.success(`文件夹"${row.fileRealName}"新建成功！`)
+      MkDir({fileName: row.fileName, parentId: this.filters.parentId}).then(res => {
+        this.$toast.success(`文件夹"${row.fileName}"新建成功！`)
         this.reLoad()
       }).catch(res => {
       })
@@ -564,7 +564,7 @@ export default {
         res.data.forEach((value, index) => {
           let node = {}
           node['id'] = value.id
-          node['label'] = value.fileRealName
+          node['label'] = value.fileName
           nodes.push(node)
         })
         resolve(nodes)
@@ -591,7 +591,7 @@ export default {
     // 打开文件移动对话框
     mvFileHandler (row, index) {
       this.action = 'mvfile'
-      this.movedFileSaveName = row.fileSaveName
+      this.movedFileKey = row.key
       this.movedId = row.id
       this.show = true
       this.hackReset = false;// 销毁组件
@@ -601,7 +601,7 @@ export default {
     },
     // 文件分享
     shareFileHandler (row, index) {
-      ShareFile({ fileSaveName: row.fileSaveName }).then(res => {
+      ShareFile({ fileKey: row.key }).then(res => {
         this.shareFileDialogShow = true
         this.clipboardText = `链接：${res.data.serverHost}/#/home/s/${res.data.shareFile.shareId} 密码：${res.data.shareFile.sharePwd}`
         this.message = `文件分享成功，点击"确定"复制链接及密码（${this.clipboardText}）`
@@ -630,7 +630,7 @@ export default {
         this.$toast('不能移动到自身及其子目录！')
         done(false)
       } else {
-        MoveFile({parentId: parentId, fileSaveName: this.movedFileSaveName}).then(res => {
+        MoveFile({parentId: parentId, key: this.movedFileKey}).then(res => {
           done()
           this.$toast.success(`文件移动成功！`)
           this.mvfileShow = false

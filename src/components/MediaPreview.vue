@@ -9,10 +9,10 @@
       left-arrow
       @click-left="mediaPopupClose">
     </van-nav-bar>
-    <div v-if="mediaFile && mediaFile.fileType === $NetdiskConstant.FILE_TYPE_OF_MUSIC">
+    <div v-if="mediaFile && mediaFile.fileOrigin.fileType === $NetdiskConstant.FILE_TYPE_OF_MUSIC">
       <aplayer :music="musicOptions"/>
     </div>
-    <div v-if="mediaFile && mediaFile.fileType === $NetdiskConstant.FILE_TYPE_OF_VIDEO">
+    <div v-if="mediaFile && mediaFile.fileOrigin.fileType === $NetdiskConstant.FILE_TYPE_OF_VIDEO">
       <video-player class="vjs-custom-skin"
                     ref="videoPlayer"
                     :options="playerOptions"
@@ -86,18 +86,20 @@ export default {
         this.musicOptions.title = ''
         this.musicOptions.src = ''
       } else {
-        if (!this.mediaFile.mediaCachePath) {
+        if (!this.mediaFile.fileOrigin.previewUrl) {
           this.$toast('正在转码中，请稍后再试')
         }
-        this.title = this.mediaFile.fileRealName
-        if (this.mediaFile.fileType === this.$NetdiskConstant.FILE_TYPE_OF_VIDEO) {
+        this.title = this.mediaFile.fileName
+        if (this.mediaFile.fileOrigin.fileType === this.$NetdiskConstant.FILE_TYPE_OF_VIDEO) {
           this.playerOptions.sources.splice(0)
           this.playerOptions.sources.push({
             type: 'video/mp4',
-            src: this.mediaFile.mediaCachePath})
-        } else if (this.mediaFile.fileType === this.$NetdiskConstant.FILE_TYPE_OF_MUSIC) {
-          this.musicOptions.title = this.mediaFile.fileRealName
-          this.musicOptions.src = this.mediaFile.mediaCachePath
+            src: this.mediaFile.fileOrigin.previewUrl})
+        } else if (this.mediaFile.fileOrigin.fileType === this.$NetdiskConstant.FILE_TYPE_OF_MUSIC) {
+          this.musicOptions.title = this.mediaFile.fileName
+          this.musicOptions.src = this.mediaFile.fileOrigin.previewUrl
+          this.musicOptions.artist = this.mediaFile.fileMedia.musicArtist
+          this.musicOptions.pic = this.mediaFile.fileMedia.musicPoster
         }
       }
     }

@@ -1,6 +1,6 @@
 import { ImagePreview } from 'vant'
-import { FindById } from '@/api/file'
-import { GetSubList } from '@/api/share'
+import { GetFileMediaInfo } from '@/api/file'
+import { GetShareFileMediaInfo } from '@/api/share'
 
 export default {
   data () {
@@ -20,7 +20,7 @@ export default {
     imagePreview (params) {
       this.getFileDetail(params).then(file => {
         ImagePreview([
-          file.mediaCachePath
+          file.fileOrigin.previewUrl
         ])
       })
     },
@@ -41,16 +41,15 @@ export default {
         switch (this.previewFlag) {
           case 1:
           case 3:
-            FindById({ id: params.id }).then(res => {
+            GetFileMediaInfo(params).then(res => {
               resolve(res.data)
             }).catch((res) => {
               reject(res)
             })
             break
           case 2:
-            GetSubList({shareId: params.shareId, sharePwd: params.sharePwd}).then(res => {
-              this.fileList = res.data.files
-              resolve(res.data.files[0])
+            GetShareFileMediaInfo(params).then(res => {
+              resolve(res.data)
             }).catch(res => {
               reject(res)
             })

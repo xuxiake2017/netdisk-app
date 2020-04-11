@@ -13,7 +13,7 @@
       <ul class="layui-layim-list layui-show">
         <li v-for="(item, index) in searchResult" :key="index" @click="openAddFriendConfirmDialog(item)">
           <img :src="item.avatar"/>
-          <span>{{item.username}}</span>
+          <span>{{item.nickName}}</span>
           <p>{{item.signature}}</p>
         </li>
       </ul>
@@ -47,7 +47,7 @@
 </template>
 
 <script>
-import { SearchFriend, AddFriendRequest } from '@/api/friendApplyFor'
+import { SearchFriend, AddFriendRequest } from '@/api/friendRequest'
 import { mapGetters } from 'vuex'
 export default {
   name: 'AddFriend',

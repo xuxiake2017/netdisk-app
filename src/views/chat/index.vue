@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import { FriendApplyForOption } from '@/api/friendApplyFor'
+import { FriendRequestOption } from '@/api/friendRequest'
 import util from '@/utils/util'
 import { mapGetters } from 'vuex'
 import ChatFileList from '@/components/ChatFileList'
@@ -176,7 +176,7 @@ export default {
         title: '标题',
         message: `确认同意添加${item.content.applicantUsername}为好友？`
       }).then(() => {
-        FriendApplyForOption({
+        FriendRequestOption({
           applicant: item.content.applicant,
           option: 1
         }).then(res => {
@@ -194,7 +194,7 @@ export default {
         title: '标题',
         message: `确认拒绝${item.content.applicantUsername}的好友申请？`
       }).then(() => {
-        FriendApplyForOption({
+        FriendRequestOption({
           applicant: item.content.applicant,
           option: 2
         }).then(res => {

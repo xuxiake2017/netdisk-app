@@ -71,6 +71,10 @@
         v-model="form.signature"
         label="个性签名"
       />
+      <van-field
+        v-model="form.nickName"
+        label="昵称"
+      />
       <van-cell title="" class="van-cell-save-button">
         <van-button size="small" type="info" @click="onSubmit">保存</van-button>
       </van-cell>
@@ -99,7 +103,8 @@ export default {
         email: '',
         avatar: 'https://wpimg.wallstcn.com/f778738c-e4f8-4870-b634-56703b4acafe.gif',
         userStatus: '',
-        signature: ''
+        signature: '',
+        nickName: ''
       },
       availableMemory: null
     }
@@ -159,7 +164,12 @@ export default {
         this.$toast('若更改用户名，必须重新键入密码')
         return
       }
-      Update(this.form).then(res => {
+      const params = {}
+      Object.assign(params, this.form)
+      delete params.totalMemory
+      delete params.usedMemory
+      Update(params).then(res => {
+        this.$store.dispatch('getInfo')
         this.$dialog.confirm({
           title: '提示',
           message: '修改成功, 是否返回首页?'

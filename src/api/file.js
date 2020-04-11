@@ -55,3 +55,7 @@ export const GetPathStore = params => {
 export const FindById = params => {
   return post('file/findById', params).then(res => res.data)
 }
+
+export const GetFileMediaInfo = params => {
+  return post('file/getFileMediaInfo', params).then(res => res.data)
+}
