@@ -2,7 +2,7 @@
   <div class="chat-dialog">
     <van-nav-bar
       v-if="friend"
-      :title="friend.username"
+      :title="friend.nickName"
       left-text="返回"
       left-arrow
       @click-left="goBack">
@@ -237,7 +237,7 @@ export default {
       packet['createTime'] = new Date().getTime()
       // 接收消息的好友user与friend的位置会对调
       packet['userId'] = this.friend.friendId
-      packet['userName'] = this.friend.username
+      packet['userName'] = this.friend.nickName
       packet['userAvatar'] = this.friend.avatar
       packet['friendId'] = this.user.id
       packet['friendName'] = this.user.name

@@ -83,7 +83,7 @@ export default {
       shareFile: {
         fileId: 0,
         fileName: '',
-        fileSaveName: '',
+        fileKey: '',
         fileSize: null,
         fileType: 0,
         isDir: 0,
@@ -250,6 +250,7 @@ export default {
       }
       SaveToCloud({ ...param }).then(res => {
         this.$toast(res.msg)
+        this.$store.dispatch('getInfo')
       }).catch(res => {
         if (res.data.code === 20141) {
           window.setTimeout(() => {
