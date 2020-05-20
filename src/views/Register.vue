@@ -120,8 +120,7 @@ export default {
           this.setInterval(() => {
             setToken(res.data.token)
             this.$router.push({ path: '/fileList' })
-            // 打开websocket连接
-            this.$connect()
+            this.$socket.open()
           })
         }).catch(res => {
           this.loading = false

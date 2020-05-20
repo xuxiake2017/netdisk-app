@@ -9,12 +9,19 @@
 
 <script>
 import { VerifyEmail } from '@/api/user'
+import { UpdatePrincipal } from '../api/user';
+import {mapGetters} from 'vuex';
 export default {
   name: 'Verify',
   data () {
     return {
 
     }
+  },
+  computed: {
+    ...mapGetters([
+      'user'
+    ])
   },
   methods: {
     clickLeftHandler () {
@@ -34,6 +41,9 @@ export default {
             this.$router.push({ path: '/fileList' })
           } else {
             this.setInterval()
+            if (this.user) {
+              this.updatePrincipal()
+            }
           }
         })
       }
@@ -57,6 +67,11 @@ export default {
           this.$router.push({ path: '/fileList' })
         }
       }, 1000)
+    },
+    updatePrincipal () {
+      UpdatePrincipal().then(res => {
+        this.$store.dispatch('getInfo')
+      })
     }
   },
   mounted () {

@@ -75,7 +75,7 @@ export default {
       if (!this.networkStatus) {
         this.$toast('网络连接恢复!')
         this.networkStatus = true
-        this.$connect()
+        this.$socket.open()
       }
     },
     jumpToChat () {
@@ -107,9 +107,9 @@ export default {
         this.friendMessage.friendAvatar = messageContent.applicantAvatar
         this.friendMessage.content = messageContent.postscript
       } else if (receive.type === 'SYSTEM') {
-        if (receive.content === 'updatePrincipal') {
-          this.updatePrincipal()
-        }
+        // if (receive.content === 'updatePrincipal') {
+        //   this.updatePrincipal()
+        // }
         return
       }
       if (window.cordova) {
