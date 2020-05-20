@@ -22,9 +22,4 @@ npm run build
 - `x-netdisk` [后端地址](https://github.com/xuxiake2017/x-netdisk)
 
 ## 图片
-- 登录
-![登录](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/3.JPG)
-- 主界面
-![主界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/2.JPG)
-- WEB IM界面
-![WEB IM界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/1.JPG)
+![登录](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/3.JPG)![主界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/2.JPG)![WEB IM界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/1.JPG)
