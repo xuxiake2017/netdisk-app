@@ -1,6 +1,6 @@
 # netdisk-app
 
-> A Vue.js project
+> x-netdisk前端
 
 ## Build Setup
 
@@ -13,21 +13,18 @@ npm run dev
 
 # build for production with minification
 npm run build
-
-# build for production and view the bundle analyzer report
-npm run build --report
-
-# run unit tests
-npm run unit
-
-# run e2e tests
-npm run e2e
-
-# run all tests
-npm test
 ```
+## 项目简介
+- 使用基于`vue`的`vant` ui框架
+- WEB IM界面主要样式参考`layim`（拉取公开页面的样式），核心业务是自己的
+- im的socket是使用`socket.io-client`
+- 前端会计算文件md5，使用的是`spark-md5`，请使用现代浏览器
+- `x-netdisk` [后端地址](https://github.com/xuxiake2017/x-netdisk)
 
-For a detailed explanation on how things work, check out the [guide](http://vuejs-templates.github.io/webpack/) and [docs for vue-loader](http://vuejs.github.io/vue-loader).
-
-## 2019-12-24
-加上去看看有没有圣诞彩蛋...
+## 图片
+- 登录
+![登录](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/3.JPG)
+- 主界面
+![主界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/2.JPG)
+- WEB IM界面
+![WEB IM界面](https://raw.githubusercontent.com/xuxiake2017/netdisk-app/master/pic/1.JPG)
