@@ -40,7 +40,18 @@ module.exports = {
     // https://vue-loader.vuejs.org/en/options.html#cachebusting
     cacheBusting: true,
 
-    cssSourceMap: true
+    cssSourceMap: true,
+    proxyTable: {
+      // 请求名字变量可以自己定义
+      '/netdisk': {
+        target: 'http://127.0.0.1:8080', // 请求的接口域名或IP地址，开头是http或https
+        // secure: false, // 如果是https接口，需要配置这个参数
+        changeOrigin: true, // 是否跨域，如果接口跨域，需要进行这个参数配置
+        pathRewrite: {
+          '^/netdisk': '/netdisk' // 表示需要rewrite重写路径  
+        }
+      }
+    }
   },
 
   build: {
